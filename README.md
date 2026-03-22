@@ -89,8 +89,8 @@ Telegram (@drekian_oc_bot)
 | OS | Ubuntu 24.04.4 LTS |
 | RAM | 2 GB + 1 GB swap |
 | Docker | v29.3 + Compose v5.1 |
-| OpenClaw version | 2026.3.13 |
-| Image | `ghcr.io/openclaw/openclaw:latest` |
+| OpenClaw channel | `main` (tracks latest unreleased features) |
+| Image | `ghcr.io/openclaw/openclaw:main` |
 | Restart policy | `unless-stopped` |
 
 ---
@@ -112,9 +112,10 @@ Telegram (@drekian_oc_bot)
 |------|---------|
 | `/opt/openclaw/docker-compose.yml` | Docker Compose stack definition |
 | `/opt/openclaw/.env` | API keys and env vars for Docker |
+| `/opt/openclaw/self-update.sh` | Agent self-redeploy script (mounted into container) |
 | `/root/.openclaw/openclaw.json` | OpenClaw runtime config (models, channels, gateway) |
 | `/root/.openclaw/agents/main/sessions/` | Persisted chat sessions |
-| `/root/.openclaw/workspace/` | Agent workspace (AGENTS.md, SOUL.md, etc.) |
+| `/root/.openclaw/workspace/` | Agent workspace (AGENTS.md, MEMORY.md, etc.) |
 | `/root/.openclaw/credentials/` | Telegram pairing data |
 
 ---
@@ -144,15 +145,17 @@ container with `ssh vikunja-prod "cd /opt/openclaw && docker compose up -d"`.
 
 ## Model Configuration
 
-Default model: `anthropic/claude-haiku-4-5` (cheap, safe default on this OpenClaw build)
+Default model: `openai/gpt-5.4-mini` (cheap, fast)
 
 ### Available Models (configured aliases)
 
 | Alias | Model | Provider | Input Cost | Output Cost |
 |-------|-------|----------|-----------|-------------|
-| `cheap` | `claude-haiku-4-5` | Anthropic | $1.00/MTok | $5.00/MTok |
+| `cheap` | `gpt-5.4-mini` | OpenAI | $0.40/MTok | $1.60/MTok |
+| `nano` | `gpt-5.4-nano` | OpenAI | $0.10/MTok | $0.40/MTok |
 | `smart` | `gpt-5.4` | OpenAI | $2.50/MTok | $15.00/MTok |
-| `sonnet` | `claude-sonnet-4.6` | Anthropic | $3.00/MTok | $15.00/MTok |
+| `haiku` | `claude-haiku-4-5` | Anthropic | $1.00/MTok | $5.00/MTok |
+| `sonnet` | `claude-sonnet-4-6` | Anthropic | $3.00/MTok | $15.00/MTok |
 
 ### Switching Models
 
@@ -164,53 +167,23 @@ Resets to default on `/new`.
 
 ### Cost Guidance
 
-For casual daily use with `claude-haiku-4-5`, expect materially lower cost than
-Sonnet or Opus. Switching to `smart` or `sonnet` for specific tasks is fine —
+For casual daily use with `gpt-5.4-mini`, expect very low cost.
+Switching to `smart` or `sonnet` for specific tasks is fine —
 just switch back with `/model cheap` or `/new` when done.
 
 ---
 
-## Current Config (openclaw.json)
+## Current Config
 
-```json
-{
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "anthropic/claude-haiku-4-5",
-        "fallbacks": ["openai/gpt-5.4"]
-      },
-      "models": {
-        "anthropic/claude-haiku-4-5": { "alias": "cheap" },
-        "openai/gpt-5.4": { "alias": "smart" },
-        "anthropic/claude-sonnet-4-6": { "alias": "sonnet" }
-      }
-    }
-  },
-  "channels": {
-    "telegram": {
-      "enabled": true,
-      "dmPolicy": "allowlist",
-      "botToken": "<your-bot-token>",
-      "groupPolicy": "disabled",
-      "streaming": "partial",
-      "allowFrom": [876499264]
-    }
-  },
-  "gateway": {
-    "mode": "local",
-    "bind": "lan",
-    "controlUi": {
-      "allowedOrigins": [
-        "http://localhost:18789",
-        "http://127.0.0.1:18789",
-        "http://23.226.133.245:18789"
-      ]
-    },
-    "auth": { "mode": "token" }
-  }
-}
-```
+The config template lives at `infra_assets/config/openclaw.json.template`.
+It is seeded to `/root/.openclaw/openclaw.json` on first deploy.
+See the template file for the full current config.
+
+Key settings:
+- Default model: `openai/gpt-5.4-mini` with `anthropic/claude-haiku-4-5` fallback
+- Tools profile: `full` (shell, file I/O, Docker access)
+- Elevated execution: enabled for Telegram user `876499264`
+- Telegram: allowlist-only DMs, streaming partial
 
 ---
 
@@ -221,11 +194,10 @@ When you switch models with `/model`, the session remembers that model even
 across container restarts. Use `/new` to reset and pick up the configured
 default again.
 
-### OpenAI mini/nano naming trap
-This OpenClaw build rejected `openai/gpt-5.4-mini` with `Unknown model` even
-though the OpenAI account itself exposes that model. Do not use the versioned
-mini/nano refs in this setup unless you re-test them after an OpenClaw update.
-Use the current safe aliases instead: `cheap`, `smart`, `sonnet`.
+### Self-management
+The agent has Docker socket access and can pull/redeploy itself via
+`/usr/local/bin/self-update.sh` (mounted into the container). The AGENTS.md
+workspace file teaches it how. Always ask the agent to confirm before self-update.
 
 ### File permissions
 The container runs as uid `1000` (node user). After editing any file under
@@ -261,6 +233,9 @@ ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/update-openclaw.sh"
 
 # Or directly on VPS:
 /opt/src/my_openclaw/infra_assets/scripts/update-openclaw.sh
+
+# Or ask the bot itself in Telegram:
+# "update yourself to the latest version"
 ```
 The `doctor` migration runs on startup and may rewrite parts of your config to
 match the latest schema. This is normal.

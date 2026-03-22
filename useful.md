@@ -16,9 +16,11 @@ SSH alias: `vikunja-prod` → `root@23.226.133.245`
 /model            List available models (numbered picker)
 /model list       Same as /model
 /model <number>   Pick a model by number from the picker
-/model cheap      Switch to claude-haiku-4-5 (default)
+/model cheap      Switch to gpt-5.4-mini (default)
+/model nano       Switch to gpt-5.4-nano (ultra-cheap)
 /model smart      Switch to gpt-5.4 (smarter, costs more)
-/model sonnet     Switch to claude-sonnet-4.6
+/model haiku      Switch to claude-haiku-4-5
+/model sonnet     Switch to claude-sonnet-4-6
 /help             Show all available commands
 /commands         Full command list
 /think <level>    Set thinking level: off|minimal|low|medium|high|xhigh
@@ -137,8 +139,19 @@ ssh vikunja-prod "rm -f /root/.openclaw/agents/main/sessions/*.jsonl && python3 
 
 ### Pull latest image and restart
 ```powershell
-ssh vikunja-prod "cd /opt/openclaw && docker compose pull && docker compose up -d"
+ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/update-openclaw.sh"
 ```
+
+### Full deploy (pull repo + apply infra + restart)
+```powershell
+ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/deploy-openclaw.sh"
+```
+
+### Ask the bot to update itself (from Telegram)
+```
+Update yourself to the latest version
+```
+It will run `self-update.sh` — expect ~30s downtime.
 
 ---
 
@@ -157,7 +170,7 @@ ssh vikunja-prod "cd /opt/openclaw && docker compose pull && docker compose up -
 1. In Telegram: `/new`
 2. Then: `/model list`
 3. Pick one of the listed models instead of typing an old cached ref
-4. Current safe choices are: `/model cheap`, `/model smart`, `/model sonnet`
+4. Current safe choices are: `/model cheap`, `/model nano`, `/model smart`, `/model haiku`, `/model sonnet`
 
 ### 401 authentication errors?
 Your API key is wrong or expired. Edit `/opt/openclaw/.env` and update the key.
