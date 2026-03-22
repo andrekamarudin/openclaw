@@ -24,6 +24,16 @@ function Get-DotEnvMap {
 	return $map
 }
 
+function Get-SshResult {
+	param([object]$Result)
+
+	if ($Result -is [System.Array]) {
+		return $Result[0]
+	}
+
+	return $Result
+}
+
 $envMap = Get-DotEnvMap -Path $envPath
 
 $requiredKeys = @(
@@ -88,7 +98,7 @@ try {
 	$session = New-SSHSession -ComputerName $hostName -Credential $credential -AcceptKey -ConnectionTimeout 20
 
 	Write-Host 'Bootstrapping host packages and repo ...'
-	$bootstrapResult = Invoke-SSHCommand -SSHSession $session -Command $bootstrapScript -TimeOut 120000
+	$bootstrapResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $bootstrapScript -TimeOut 120000)
 	if ($bootstrapResult.ExitStatus -ne 0) {
 		throw ($bootstrapResult.Output -join [Environment]::NewLine)
 	}
@@ -101,20 +111,20 @@ try {
 
 	Write-Host 'Extracting repo snapshot and applying infra assets ...'
 	$extractCommand = "rm -rf '$remoteRepoDir'; mkdir -p '$remoteRepoDir'; tar -xf /tmp/my_openclaw.tar -C '$remoteRepoDir'; rm -f /tmp/my_openclaw.tar"
-	$extractResult = Invoke-SSHCommand -SSHSession $session -Command $extractCommand -TimeOut 60000
+	$extractResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $extractCommand -TimeOut 60000)
 	if ($extractResult.ExitStatus -ne 0) {
 		throw ($extractResult.Output -join [Environment]::NewLine)
 	}
 
 	Write-Host 'Running deploy from pushed repo snapshot + local .env ...'
 	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker compose pull openclaw-gateway; docker compose up -d --no-deps openclaw-gateway; chown -R 1000:1000 /root/.openclaw"
-	$deployResult = Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 180000
+	$deployResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 180000)
 	if ($deployResult.ExitStatus -ne 0) {
 		throw ($deployResult.Output -join [Environment]::NewLine)
 	}
 
 	Write-Host 'Checking health on new VPS ...'
-	$healthResult = Invoke-SSHCommand -SSHSession $session -Command "curl -sf http://127.0.0.1:18789/healthz" -TimeOut 30000
+	$healthResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command "curl -sf http://127.0.0.1:18789/healthz" -TimeOut 30000)
 	if ($healthResult.ExitStatus -ne 0) {
 		throw 'New OpenClaw instance did not become healthy.'
 	}
