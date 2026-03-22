@@ -73,7 +73,13 @@
       "streaming": "partial",
       "allowFrom": [
         876499264
-      ]
+      ],
+      "execApprovals": {
+        "enabled": true,
+        "approvers": [
+          876499264
+        ]
+      }
     }
   },
   "gateway": {
