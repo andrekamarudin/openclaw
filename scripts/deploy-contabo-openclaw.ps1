@@ -76,20 +76,7 @@ git -C $repoRoot archive --format=tar --output=$archivePath HEAD
 $securePassword = ConvertTo-SecureString $envMap['CONTABO_MY_SERVER_PASSWORD'] -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($userName, $securePassword)
 
-$bootstrapScript = @"
-set -euo pipefail
-export DEBIAN_FRONTEND=noninteractive
-
-apt-get update
-apt-get install -y ca-certificates curl git gettext-base
-
-if ! command -v docker >/dev/null 2>&1; then
-  curl -fsSL https://get.docker.com | sh
-  systemctl enable --now docker
-fi
-
-mkdir -p '$remoteRootDir' /opt/src /root/.openclaw
-"@
+$bootstrapScript = "set -euo pipefail; export DEBIAN_FRONTEND=noninteractive; apt-get update; apt-get install -y ca-certificates curl git gettext-base; if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sh; systemctl enable --now docker; fi; mkdir -p '$remoteRootDir' /opt/src /root/.openclaw"
 
 $session = $null
 
