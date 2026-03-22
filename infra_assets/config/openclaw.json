@@ -72,7 +72,7 @@
       "allowedOrigins": [
         "http://localhost:18789",
         "http://127.0.0.1:18789",
-        "http://23.226.133.245:18789"
+        "http://${OPENCLAW_SERVER_HOST}:18789"
       ]
     },
     "auth": {

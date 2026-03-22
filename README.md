@@ -4,6 +4,12 @@ Personal AI assistant running on a VPS, accessible via Telegram.
 
 ---
 
+## Source Of Truth
+
+- GitHub is the source of truth for app code, infra assets, config templates, and deploy scripts.
+- Local `.env` in this repo is the source of truth for OpenClaw secrets and Contabo host access.
+- The VPS only receives copies during deployment.
+
 ## Development Workflow
 
 Same pattern as Vikunja: **local changes → push → SSH pull → deploy**.
@@ -31,11 +37,8 @@ Same pattern as Vikunja: **local changes → push → SSH pull → deploy**.
 ### Deploy from local PowerShell
 
 ```powershell
-# Infra-only deploy (docker-compose, script changes)
-ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/deploy-openclaw.sh"
-
-# Source build deploy (app code changes)
-ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/deploy-build-openclaw.sh"
+# Push local .env, pull from GitHub, and redeploy on Contabo
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-openclaw.ps1
 ```
 
 ### First-time server setup
@@ -50,9 +53,8 @@ git clone https://github.com/andrekamarudin/openclaw.git /opt/src/openclaw
 # Apply infra assets (copies docker-compose.yml to /opt/openclaw/)
 /opt/src/my_openclaw/infra_assets/scripts/apply-infra-assets.sh
 
-# Make sure .env exists at /opt/openclaw/.env with your API keys
-# Then start:
-cd /opt/openclaw && docker compose up -d
+# Push local .env and let the deploy script bootstrap the server:
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-openclaw.ps1
 ```
 
 ---

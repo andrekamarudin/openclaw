@@ -5,8 +5,10 @@ set -euo pipefail
 # Mounted into the container at /usr/local/bin/self-update.sh so the agent
 # can pull and redeploy itself via Docker socket.
 
-echo '==> Pulling latest main image...'
-docker pull ghcr.io/openclaw/openclaw:main
+OPENCLAW_IMAGE="${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}"
+
+echo "==> Pulling ${OPENCLAW_IMAGE}..."
+docker pull "$OPENCLAW_IMAGE"
 
 echo '==> Recreating containers with new image...'
 cd /opt/openclaw
