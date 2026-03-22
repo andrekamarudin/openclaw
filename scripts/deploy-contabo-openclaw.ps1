@@ -55,7 +55,13 @@ if ($localHead -ne $originHead) {
 }
 
 $archivePath = Join-Path $env:TEMP ("my_openclaw-{0}.tar" -f $localHead)
+$normalizedEnvPath = Join-Path $env:TEMP 'my_openclaw.env'
 git -C $repoRoot archive --format=tar --output=$archivePath HEAD
+[System.IO.File]::WriteAllText(
+	$normalizedEnvPath,
+	([System.IO.File]::ReadAllText($envPath) -replace "`r`n", "`n"),
+	(New-Object System.Text.UTF8Encoding $false)
+)
 
 $securePassword = ConvertTo-SecureString $envMap['CONTABO_MY_SERVER_PASSWORD'] -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($userName, $securePassword)
@@ -88,10 +94,10 @@ try {
 	}
 
 	Write-Host 'Uploading local .env to remote /opt/openclaw/.env ...'
-	Set-SCPItem -SSHSession $session -LocalFile $envPath -RemotePath "$remoteRootDir/.env"
+	Set-SCPItem -ComputerName $hostName -Credential $credential -Path $normalizedEnvPath -Destination "$remoteRootDir/" -NewName '.env' -AcceptKey -Force
 
 	Write-Host 'Uploading repo snapshot for the pushed origin/master commit ...'
-	Set-SCPItem -SSHSession $session -LocalFile $archivePath -RemotePath "/tmp/my_openclaw.tar"
+	Set-SCPItem -ComputerName $hostName -Credential $credential -Path $archivePath -Destination '/tmp/' -NewName 'my_openclaw.tar' -AcceptKey -Force
 
 	Write-Host 'Extracting repo snapshot and applying infra assets ...'
 	$extractCommand = "rm -rf '$remoteRepoDir'; mkdir -p '$remoteRepoDir'; tar -xf /tmp/my_openclaw.tar -C '$remoteRepoDir'; rm -f /tmp/my_openclaw.tar"
@@ -123,6 +129,9 @@ try {
 finally {
 	if (Test-Path $archivePath) {
 		Remove-Item $archivePath -Force
+	}
+	if (Test-Path $normalizedEnvPath) {
+		Remove-Item $normalizedEnvPath -Force
 	}
 	if ($session) {
 		Remove-SSHSession -SSHSession $session | Out-Null

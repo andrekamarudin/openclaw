@@ -58,7 +58,7 @@ if [ -f "$OC_CONFIG_SRC" ]; then
         set +a
     fi
     # Substitute ${VAR} placeholders (e.g. TELEGRAM_BOT_TOKEN) with env values
-    envsubst < "$OC_CONFIG_SRC" > "$OC_CONFIG_FILE"
+    tr -d '\r' < "$OC_CONFIG_SRC" | envsubst > "$OC_CONFIG_FILE"
     echo "Deployed openclaw.json from repo (secrets injected from .env)"
 fi
 
