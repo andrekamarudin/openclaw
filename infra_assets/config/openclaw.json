@@ -41,7 +41,9 @@
     "elevated": {
       "enabled": true,
       "allowFrom": {
-        "telegram": [876499264]
+        "telegram": [
+          876499264
+        ]
       }
     }
   },
