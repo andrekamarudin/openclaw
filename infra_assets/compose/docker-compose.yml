@@ -5,7 +5,7 @@ services:
     environment:
       HOME: /home/node
       TERM: xterm-256color
-      NODE_OPTIONS: "--max-old-space-size=384"
+      NODE_OPTIONS: "--max-old-space-size=512"
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -33,8 +33,8 @@ services:
       - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
     init: true
     restart: unless-stopped
-    mem_limit: 768m
-    memswap_limit: 1g
+    mem_limit: 1g
+    memswap_limit: 1536m
     command:
       [
         "node",
