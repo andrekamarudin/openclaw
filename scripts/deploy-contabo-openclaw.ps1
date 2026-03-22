@@ -111,15 +111,7 @@ try {
 	}
 
 	Write-Host 'Checking health on new VPS ...'
-	$healthCommand = @'
-bash -lc 'for attempt in $(seq 1 24); do
-	if curl -sf http://127.0.0.1:18789/healthz; then
-		exit 0
-	fi
-	sleep 5
-done
-exit 1'
-'@
+	$healthCommand = "bash -lc 'for attempt in `$(seq 1 24); do if curl -sf http://127.0.0.1:18789/healthz; then exit 0; fi; sleep 5; done; exit 1'"
 	$healthResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $healthCommand -TimeOut 130000)
 	if ($healthResult.ExitStatus -ne 0) {
 		throw 'New OpenClaw instance did not become healthy.'
