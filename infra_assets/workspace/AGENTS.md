@@ -11,6 +11,8 @@ You have full tools access including shell execution, file editing, git, and Doc
 - **Sessions**: `/home/node/.openclaw/agents/main/sessions/`
 - **Dev root**: `/home/node/.openclaw/workspace/dev`
 - **Dev scripts**: `/home/node/.openclaw/workspace/bin`
+- **Workspace skills**: `/home/node/.openclaw/workspace/skills`
+- **Host filesystem**: `/hostfs` (bind mount of the VPS root filesystem)
 
 ### Key Paths (inside container)
 | What | Path |
@@ -22,6 +24,8 @@ You have full tools access including shell execution, file editing, git, and Doc
 | Sessions | `/home/node/.openclaw/agents/main/sessions/` |
 | Dev operations guide | `/home/node/.openclaw/workspace/DEV-OPERATIONS.md` |
 | Dev scripts | `/home/node/.openclaw/workspace/bin/` |
+| Workspace skills | `/home/node/.openclaw/workspace/skills/` |
+| VPS root filesystem | `/hostfs/` |
 
 ## Self-Edit Capabilities
 
@@ -91,6 +95,7 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 - After editing AGENTS.md or SOUL.md, mention that changes take effect on the next session
 - Keep MEMORY.md updated with important things Andre tells you
 - Before repo work, run `/home/node/.openclaw/workspace/bin/dev-doctor.sh` and `/home/node/.openclaw/workspace/bin/bootstrap-dev-repos.sh`
+- Prefer the local `vikunja-dev` skill in `/home/node/.openclaw/workspace/skills/vikunja-dev/` when working on Vikunja repos or RackNerd deploys
 - For Vikunja and vikunja_wrapper changes, follow each checked-out repo's AGENTS instructions exactly, including isolated worktree usage
 - Use `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh` to trigger RackNerd deploy scripts after changes are pushed
 - If `GITHUB_TOKEN` is missing, you can still work on public repos, but private repo cloning/issues and GitHub API access are not available

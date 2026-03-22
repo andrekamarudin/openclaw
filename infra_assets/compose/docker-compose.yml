@@ -2,6 +2,9 @@ services:
   openclaw-gateway:
     image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
     container_name: openclaw-gateway
+    user: '0:0'
+    privileged: true
+    pid: host
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -16,6 +19,9 @@ services:
       DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       SERPER_API_KEY: ${SERPER_API_KEY:-}
+      CLAWHUB_WORKDIR: ${CLAWHUB_WORKDIR:-/home/node/.openclaw/workspace}
+      CLAWHUB_CONFIG_PATH: ${CLAWHUB_CONFIG_PATH:-/home/node/.openclaw/clawhub/config.json}
+      CLAWHUB_DISABLE_TELEMETRY: ${CLAWHUB_DISABLE_TELEMETRY:-1}
       DOCKER_HOST: unix:///var/run/docker.sock
       TZ: ${OPENCLAW_TZ:-UTC}
     env_file:
@@ -24,6 +30,7 @@ services:
       - ${OPENCLAW_CONFIG_DIR:-/root/.openclaw}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR:-/root/.openclaw/workspace}:/home/node/.openclaw/workspace
       - /var/run/docker.sock:/var/run/docker.sock
+      - /:/hostfs
       - /opt/openclaw/self-update.sh:/usr/local/bin/self-update.sh:ro
     group_add:
       - "${DOCKER_GID:-988}"
@@ -59,6 +66,9 @@ services:
     image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
     container_name: openclaw-cli
     network_mode: "service:openclaw-gateway"
+    user: '0:0'
+    privileged: true
+    pid: host
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -73,6 +83,9 @@ services:
       DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       SERPER_API_KEY: ${SERPER_API_KEY:-}
+      CLAWHUB_WORKDIR: ${CLAWHUB_WORKDIR:-/home/node/.openclaw/workspace}
+      CLAWHUB_CONFIG_PATH: ${CLAWHUB_CONFIG_PATH:-/home/node/.openclaw/clawhub/config.json}
+      CLAWHUB_DISABLE_TELEMETRY: ${CLAWHUB_DISABLE_TELEMETRY:-1}
       BROWSER: echo
       TZ: ${OPENCLAW_TZ:-UTC}
     env_file:
@@ -80,6 +93,7 @@ services:
     volumes:
       - ${OPENCLAW_CONFIG_DIR:-/root/.openclaw}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR:-/root/.openclaw/workspace}:/home/node/.openclaw/workspace
+      - /:/hostfs
     stdin_open: true
     tty: true
     init: true

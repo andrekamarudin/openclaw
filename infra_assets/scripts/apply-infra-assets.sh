@@ -105,6 +105,10 @@ if [ -d "$WORKSPACE_SRC/bin" ]; then
     cp -R "$WORKSPACE_SRC/bin/." "$WORKSPACE_DIR/bin/"
     find "$WORKSPACE_DIR/bin" -type f -name '*.sh' -exec chmod +x {} +
 fi
+if [ -d "$WORKSPACE_SRC/skills" ]; then
+    mkdir -p "$WORKSPACE_DIR/skills"
+    cp -R "$WORKSPACE_SRC/skills/." "$WORKSPACE_DIR/skills/"
+fi
 
 # --- Fix permissions ---
 chown -R 1000:1000 "$OC_CONFIG_DIR"

@@ -6,6 +6,7 @@ This workspace is set up so OpenClaw can:
 - clone and update repos under `/home/node/.openclaw/workspace/dev`
 - create isolated worktrees for concurrent development
 - deploy to the RackNerd Vikunja host through repo-managed SSH deploy scripts
+- install or update workspace skills through ClawHub without mixing them into the repo itself
 
 ## Core scripts
 
@@ -14,6 +15,13 @@ This workspace is set up so OpenClaw can:
 - `bin/create-worktree.sh <repo> <branch>` — create an isolated worktree
 - `bin/github-issue.sh <owner/repo> <issue-number>` — fetch a GitHub issue as JSON
 - `bin/deploy-racknerd.sh <wrapper|fast|core-build>` — run the RackNerd deploy scripts over SSH
+- `bin/clawhub.sh <args...>` — run ClawHub with workspace-local defaults
+
+## Local skills
+
+- Workspace-local skills live in `/home/node/.openclaw/workspace/skills`
+- The `vikunja-dev` skill wraps the repo bootstrap, worktree, GitHub issue, and RackNerd deploy workflow
+- ClawHub installs also land in the workspace skills directory on the next session when run with `bin/clawhub.sh`
 
 ## Expected env vars
 
@@ -27,3 +35,4 @@ This workspace is set up so OpenClaw can:
 - `go-vikunja/vikunja` is public and can be cloned without a token, but pushing requires a fork or direct push access.
 - `andrekamarudin/vikunja_wrapper` is assumed private; cloning and issue access require `GITHUB_TOKEN`.
 - Repo AGENTS instructions still apply inside the cloned repos.
+- OpenClaw itself runs with sandbox mode off. The full VPS filesystem is mounted at `/hostfs` for host-level inspection and edits.
