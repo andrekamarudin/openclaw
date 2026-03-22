@@ -23,6 +23,32 @@ SCRIPT_NAMES=(
     self-update.sh
 )
 
+load_dotenv_file() {
+    local dotenv_path="$1"
+
+    [ -f "$dotenv_path" ] || return 0
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            ''|\#*)
+                continue
+                ;;
+        esac
+
+        line="${line%$'\r'}"
+
+        local key="${line%%=*}"
+        local value="${line#*=}"
+
+        key="$(printf '%s' "$key" | tr -d '[:space:]')"
+        if [ -z "$key" ] || [ "$key" = "$line" ]; then
+            continue
+        fi
+
+        export "$key=$value"
+    done < "$dotenv_path"
+}
+
 if [ ! -f "$SOURCE_COMPOSE_FILE" ]; then
     echo "Missing source compose file: $SOURCE_COMPOSE_FILE" >&2
     exit 1
@@ -52,10 +78,7 @@ if [ -f "$OC_CONFIG_SRC" ]; then
     mkdir -p "$OC_CONFIG_DIR"
     # Load secrets from .env so they can be substituted into the config
     if [ -f "$OC_ROOT_DIR/.env" ]; then
-        set -a
-        # shellcheck disable=SC1091
-        . "$OC_ROOT_DIR/.env"
-        set +a
+        load_dotenv_file "$OC_ROOT_DIR/.env"
     fi
     # Substitute ${VAR} placeholders (e.g. TELEGRAM_BOT_TOKEN) with env values
     tr -d '\r' < "$OC_CONFIG_SRC" | envsubst > "$OC_CONFIG_FILE"
