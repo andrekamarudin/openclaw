@@ -112,7 +112,7 @@ try {
 
 	Write-Host 'Checking health on new VPS ...'
 	$healthCommand = @"
-bash -lc 'for attempt in \\$(seq 1 24); do
+bash -lc 'for attempt in $(seq 1 24); do
 	if curl -sf http://127.0.0.1:18789/healthz; then
 		exit 0
 	fi
