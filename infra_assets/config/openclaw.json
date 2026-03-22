@@ -55,7 +55,7 @@
     "telegram": {
       "enabled": true,
       "dmPolicy": "allowlist",
-      "botToken": "REPLACE_WITH_TELEGRAM_BOT_TOKEN",
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
       "groupPolicy": "disabled",
       "streaming": "partial",
       "allowFrom": [

@@ -45,17 +45,25 @@ if [ -f "$SELF_UPDATE_SRC" ]; then
 fi
 
 # --- OpenClaw config ---
-# Only seed from template if no config exists yet (preserves runtime changes).
+# Always overwrite from repo (source of truth). Secrets are injected from .env.
 OC_CONFIG_FILE="$OC_CONFIG_DIR/openclaw.json"
-OC_CONFIG_TEMPLATE="$OC_REPO_DIR/infra_assets/config/openclaw.json.template"
-if [ ! -f "$OC_CONFIG_FILE" ] && [ -f "$OC_CONFIG_TEMPLATE" ]; then
+OC_CONFIG_SRC="$OC_REPO_DIR/infra_assets/config/openclaw.json"
+if [ -f "$OC_CONFIG_SRC" ]; then
     mkdir -p "$OC_CONFIG_DIR"
-    cp "$OC_CONFIG_TEMPLATE" "$OC_CONFIG_FILE"
-    echo "Seeded openclaw.json from template (edit bot token before starting)"
+    # Load secrets from .env so they can be substituted into the config
+    if [ -f "$OC_ROOT_DIR/.env" ]; then
+        set -a
+        # shellcheck disable=SC1091
+        . "$OC_ROOT_DIR/.env"
+        set +a
+    fi
+    # Substitute ${VAR} placeholders (e.g. TELEGRAM_BOT_TOKEN) with env values
+    envsubst < "$OC_CONFIG_SRC" > "$OC_CONFIG_FILE"
+    echo "Deployed openclaw.json from repo (secrets injected from .env)"
 fi
 
 # --- Workspace files ---
-# Always sync AGENTS.md (operating instructions); only seed MEMORY.md if missing.
+# Always overwrite from repo (source of truth).
 WORKSPACE_DIR="$OC_CONFIG_DIR/workspace"
 WORKSPACE_SRC="$OC_REPO_DIR/infra_assets/workspace"
 mkdir -p "$WORKSPACE_DIR"
@@ -63,7 +71,7 @@ mkdir -p "$WORKSPACE_DIR"
 if [ -f "$WORKSPACE_SRC/AGENTS.md" ]; then
     cp "$WORKSPACE_SRC/AGENTS.md" "$WORKSPACE_DIR/AGENTS.md"
 fi
-if [ ! -f "$WORKSPACE_DIR/MEMORY.md" ] && [ -f "$WORKSPACE_SRC/MEMORY.md" ]; then
+if [ -f "$WORKSPACE_SRC/MEMORY.md" ]; then
     cp "$WORKSPACE_SRC/MEMORY.md" "$WORKSPACE_DIR/MEMORY.md"
 fi
 
