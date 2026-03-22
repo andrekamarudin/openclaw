@@ -47,6 +47,16 @@ $userName = $envMap['OPENCLAW_REMOTE_SSH_USER']
 $remoteRootDir = $envMap['OPENCLAW_REMOTE_ROOT_DIR']
 $remoteRepoDir = $envMap['OPENCLAW_REMOTE_REPO_DIR']
 
+$localHead = (git -C $repoRoot rev-parse HEAD).Trim()
+$originHead = (git -C $repoRoot rev-parse origin/master).Trim()
+
+if ($localHead -ne $originHead) {
+	throw 'Local HEAD does not match origin/master. Push your repo changes before deploying.'
+}
+
+$archivePath = Join-Path $env:TEMP ("my_openclaw-{0}.tar" -f $localHead)
+git -C $repoRoot archive --format=tar --output=$archivePath HEAD
+
 $securePassword = ConvertTo-SecureString $envMap['CONTABO_MY_SERVER_PASSWORD'] -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($userName, $securePassword)
 
@@ -63,13 +73,6 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 mkdir -p '$remoteRootDir' /opt/src /root/.openclaw
-
-if [ ! -d '$remoteRepoDir/.git' ]; then
-  git clone https://github.com/andrekamarudin/my_openclaw.git '$remoteRepoDir'
-else
-  git -C '$remoteRepoDir' fetch origin
-  git -C '$remoteRepoDir' reset --hard origin/master
-fi
 "@
 
 $session = $null
@@ -87,8 +90,18 @@ try {
 	Write-Host 'Uploading local .env to remote /opt/openclaw/.env ...'
 	Set-SCPItem -SSHSession $session -LocalFile $envPath -RemotePath "$remoteRootDir/.env"
 
-	Write-Host 'Running deploy from GitHub repo + local .env ...'
-	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/deploy-openclaw.sh'"
+	Write-Host 'Uploading repo snapshot for the pushed origin/master commit ...'
+	Set-SCPItem -SSHSession $session -LocalFile $archivePath -RemotePath "/tmp/my_openclaw.tar"
+
+	Write-Host 'Extracting repo snapshot and applying infra assets ...'
+	$extractCommand = "rm -rf '$remoteRepoDir'; mkdir -p '$remoteRepoDir'; tar -xf /tmp/my_openclaw.tar -C '$remoteRepoDir'; rm -f /tmp/my_openclaw.tar"
+	$extractResult = Invoke-SSHCommand -SSHSession $session -Command $extractCommand -TimeOut 60000
+	if ($extractResult.ExitStatus -ne 0) {
+		throw ($extractResult.Output -join [Environment]::NewLine)
+	}
+
+	Write-Host 'Running deploy from pushed repo snapshot + local .env ...'
+	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker compose pull openclaw-gateway; docker compose up -d --no-deps openclaw-gateway; chown -R 1000:1000 /root/.openclaw"
 	$deployResult = Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 180000
 	if ($deployResult.ExitStatus -ne 0) {
 		throw ($deployResult.Output -join [Environment]::NewLine)
@@ -108,6 +121,9 @@ try {
 	Write-Host "OpenClaw is now running on $hostName with local .env and GitHub repo as the sources of truth."
 }
 finally {
+	if (Test-Path $archivePath) {
+		Remove-Item $archivePath -Force
+	}
 	if ($session) {
 		Remove-SSHSession -SSHSession $session | Out-Null
 	}
