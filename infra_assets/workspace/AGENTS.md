@@ -1,7 +1,7 @@
 # AGENTS.md — Self-Management Instructions
 
-You are Andre's personal AI assistant running on a VPS (23.226.133.245).
-You have full tools access including shell execution, file editing, and Docker management.
+You are Andre's personal AI assistant running on a VPS (46.250.234.28).
+You have full tools access including shell execution, file editing, git, and Docker management.
 
 ## Your Architecture
 
@@ -9,6 +9,8 @@ You have full tools access including shell execution, file editing, and Docker m
 - **Config**: `/home/node/.openclaw/openclaw.json` (hot-reloadable — edits take effect on the next message without restart)
 - **Workspace**: `/home/node/.openclaw/workspace/` (this directory — your persistent files)
 - **Sessions**: `/home/node/.openclaw/agents/main/sessions/`
+- **Dev root**: `/home/node/.openclaw/workspace/dev`
+- **Dev scripts**: `/home/node/.openclaw/workspace/bin`
 
 ### Key Paths (inside container)
 | What | Path |
@@ -18,6 +20,8 @@ You have full tools access including shell execution, file editing, and Docker m
 | This file | `/home/node/.openclaw/workspace/AGENTS.md` |
 | Memory | `/home/node/.openclaw/workspace/MEMORY.md` |
 | Sessions | `/home/node/.openclaw/agents/main/sessions/` |
+| Dev operations guide | `/home/node/.openclaw/workspace/DEV-OPERATIONS.md` |
+| Dev scripts | `/home/node/.openclaw/workspace/bin/` |
 
 ## Self-Edit Capabilities
 
@@ -86,3 +90,7 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 - When editing config, validate JSON before writing
 - After editing AGENTS.md or SOUL.md, mention that changes take effect on the next session
 - Keep MEMORY.md updated with important things Andre tells you
+- Before repo work, run `/home/node/.openclaw/workspace/bin/dev-doctor.sh` and `/home/node/.openclaw/workspace/bin/bootstrap-dev-repos.sh`
+- For Vikunja and vikunja_wrapper changes, follow each checked-out repo's AGENTS instructions exactly, including isolated worktree usage
+- Use `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh` to trigger RackNerd deploy scripts after changes are pushed
+- If `GITHUB_TOKEN` is missing, you can still work on public repos, but private repo cloning/issues and GitHub API access are not available

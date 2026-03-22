@@ -74,6 +74,14 @@ fi
 if [ -f "$WORKSPACE_SRC/MEMORY.md" ]; then
     cp "$WORKSPACE_SRC/MEMORY.md" "$WORKSPACE_DIR/MEMORY.md"
 fi
+if [ -f "$WORKSPACE_SRC/DEV-OPERATIONS.md" ]; then
+    cp "$WORKSPACE_SRC/DEV-OPERATIONS.md" "$WORKSPACE_DIR/DEV-OPERATIONS.md"
+fi
+if [ -d "$WORKSPACE_SRC/bin" ]; then
+    mkdir -p "$WORKSPACE_DIR/bin"
+    cp -R "$WORKSPACE_SRC/bin/." "$WORKSPACE_DIR/bin/"
+    find "$WORKSPACE_DIR/bin" -type f -name '*.sh' -exec chmod +x {} +
+fi
 
 # --- Fix permissions ---
 chown -R 1000:1000 "$OC_CONFIG_DIR"
