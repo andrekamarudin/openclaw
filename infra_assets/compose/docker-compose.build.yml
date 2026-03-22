@@ -1,0 +1,8 @@
+# Build override: use with -f docker-compose.yml -f docker-compose.build.yml
+# Builds from local source at /opt/src/openclaw instead of pulling ghcr.io image.
+services:
+  openclaw-gateway:
+    image: openclaw:local
+    build:
+      context: /opt/src/openclaw
+      dockerfile: Dockerfile

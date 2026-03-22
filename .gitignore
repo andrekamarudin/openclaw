@@ -1,0 +1,13 @@
+# The openclaw source clone is a separate repository
+openclaw/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Runtime
+__pycache__/
+*.pyc
