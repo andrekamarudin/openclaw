@@ -14,3 +14,6 @@ __pycache__/
 **/.env
 **/.env.*
 !.env.example
+.github/prompts/
+.github/agents/
+.specify/
