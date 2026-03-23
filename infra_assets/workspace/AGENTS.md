@@ -97,6 +97,7 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 - Keep MEMORY.md updated with important things Andre tells you
 - Before repo work, run `/home/node/.openclaw/workspace/bin/dev-doctor.sh` and `/home/node/.openclaw/workspace/bin/bootstrap-dev-repos.sh`
 - Prefer the local `vikunja-dev` skill in `/home/node/.openclaw/workspace/skills/vikunja-dev/` when working on Vikunja repos or RackNerd deploys
+- Prefer the local `infra-overview` skill in `/home/node/.openclaw/workspace/skills/infra-overview/` when answering questions about infrastructure, VPS servers, services, SSH access, or anything deployment-related across all VPSes
 - For Vikunja and vikunja_wrapper changes, follow each checked-out repo's AGENTS instructions exactly, including isolated worktree usage
 - Use `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh` to trigger RackNerd deploy scripts after changes are pushed
 - If `GITHUB_TOKEN` is missing, you can still work on public repos, but private repo cloning/issues and GitHub API access are not available
@@ -116,12 +117,12 @@ Open WebUI runs as a sibling container on this VPS, published on localhost and f
 
 ### Deploy (full — pulls repo + infra + image)
 ```bash
-bash /hostfs/opt/src/my_openclaw/infra_assets/scripts/deploy-openwebui.sh
+bash /hostfs/opt/src/my_openclaw/openwebui/scripts/deploy-openwebui.sh
 ```
 
 ### Update (quick — image pull + restart only)
 ```bash
-bash /hostfs/opt/src/my_openclaw/infra_assets/scripts/update-openwebui.sh
+bash /hostfs/opt/src/my_openclaw/openwebui/scripts/update-openwebui.sh
 ```
 
 ### Status & Logs

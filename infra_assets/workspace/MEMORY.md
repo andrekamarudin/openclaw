@@ -13,4 +13,7 @@
 - Session files persist model choice — if model seems wrong, clear sessions
 - Dev workspace root: `/home/node/.openclaw/workspace/dev`
 - Local workflow skill lives at `/home/node/.openclaw/workspace/skills/vikunja-dev`
+- Infrastructure overview skill at `/home/node/.openclaw/workspace/skills/infra-overview` — covers all 3 VPSes, services, SSH details
 - RackNerd deploys should be done over SSH with the dedicated deploy key from env, not by editing the VPS manually
+- GreenCloud VPS (167.253.159.196) reuses the same SSH key as RackNerd — run `setup-greencloud-ssh.sh` to set up known_hosts
+- Three VPSes: Contabo (this box, 46.250.234.28), RackNerd (23.226.133.245), GreenCloud (167.253.159.196)
