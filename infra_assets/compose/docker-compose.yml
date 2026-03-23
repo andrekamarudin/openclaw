@@ -126,6 +126,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       TZ: ${OPENCLAW_TZ:-Asia/Singapore}
+      SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY}
     restart: unless-stopped
 
   uptime-kuma:
