@@ -32,6 +32,12 @@ Same pattern as Vikunja: **local changes → push → SSH pull → deploy**.
 
 # Source build deploy (when you have app code changes in your fork)
 /opt/src/my_openclaw/infra_assets/scripts/deploy-build-openclaw.sh
+
+# Deploy Open WebUI: pull repo + latest image + ensure Caddy running
+/opt/src/my_openclaw/infra_assets/scripts/deploy-openwebui.sh
+
+# Quick Open WebUI image update only
+/opt/src/my_openclaw/infra_assets/scripts/update-openwebui.sh
 ```
 
 ### Deploy from local PowerShell
@@ -65,17 +71,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-openclaw.ps1
 Telegram (@drekian_oc_bot)
         │
         ▼
-┌─────────────────────────────┐
-│   VPS (23.226.133.245)      │
-│   Ubuntu 24.04 · 2GB RAM    │
-│                             │
-│   Docker Container          │
-│   openclaw-gateway          │
-│   Port 18789 (gateway)      │
-│   Port 18790 (bridge)       │
-│                             │
-│   Also runs: Vikunja        │
-└─────────────────────────────┘
+┌──────────────────────────────────┐
+│   Contabo VPS (46.250.234.28)   │
+│   Ubuntu 24.04 · 12GB RAM       │
+│                                  │
+│   openclaw-gateway  :18789/18790 │
+│   openclaw-cli                   │
+│   open-webui        :8080 (int)  │
+│   caddy             :80/443      │
+│                                  │
+│   Caddy -> open-webui (HTTPS)    │
+└──────────────────────────────────┘
 ```
 
 ---
@@ -84,15 +90,16 @@ Telegram (@drekian_oc_bot)
 
 | Item | Value |
 |------|-------|
-| VPS IP | `23.226.133.245` |
-| SSH alias | `vikunja-prod` |
+| VPS IP | `46.250.234.28` |
+| VPS provider | Contabo |
 | SSH user | `root` |
 | SSH key | `~/.ssh/id_ed25519` |
-| OS | Ubuntu 24.04.4 LTS |
-| RAM | 2 GB + 1 GB swap |
+| OS | Ubuntu 24.04 LTS |
+| RAM | 12 GB |
 | Docker | v29.3 + Compose v5.1 |
 | OpenClaw channel | `main` (tracks latest unreleased features) |
-| Image | `ghcr.io/openclaw/openclaw:main` |
+| OpenClaw image | `ghcr.io/openclaw/openclaw:main` |
+| Open WebUI image | `ghcr.io/open-webui/open-webui:main` |
 | Restart policy | `unless-stopped` |
 
 ---
@@ -114,6 +121,7 @@ Telegram (@drekian_oc_bot)
 |------|---------|
 | `/opt/openclaw/docker-compose.yml` | Docker Compose stack definition |
 | `/opt/openclaw/.env` | API keys and env vars for Docker |
+| `/opt/openclaw/Caddyfile` | Caddy reverse proxy config (synced from repo) |
 | `/opt/openclaw/self-update.sh` | Agent self-redeploy script (mounted into container) |
 | `/root/.openclaw/openclaw.json` | OpenClaw runtime config (models, channels, gateway) |
 | `/root/.openclaw/agents/main/sessions/` | Persisted chat sessions |

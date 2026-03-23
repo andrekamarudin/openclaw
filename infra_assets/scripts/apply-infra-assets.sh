@@ -20,6 +20,8 @@ SCRIPT_NAMES=(
     deploy-openclaw.sh
     deploy-build-openclaw.sh
     update-openclaw.sh
+    deploy-openwebui.sh
+    update-openwebui.sh
     self-update.sh
 )
 
@@ -85,6 +87,19 @@ fi
 if [ -d "$WORKSPACE_SRC/skills" ]; then
     mkdir -p "$WORKSPACE_DIR/skills"
     cp -R "$WORKSPACE_SRC/skills/." "$WORKSPACE_DIR/skills/"
+fi
+
+# --- Caddyfile ---
+CADDYFILE_SRC="$OC_REPO_DIR/infra_assets/caddy/Caddyfile"
+CADDYFILE_DST="$OC_ROOT_DIR/Caddyfile"
+if [ -f "$CADDYFILE_SRC" ]; then
+    cp "$CADDYFILE_SRC" "$CADDYFILE_DST"
+    echo "Deployed Caddyfile"
+    # Reload Caddy if the container is running
+    if docker ps --filter name=caddy --format '{{.Names}}' 2>/dev/null | grep -q caddy; then
+        docker exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2>/dev/null || true
+        echo "Caddy reloaded"
+    fi
 fi
 
 # --- Fix permissions ---

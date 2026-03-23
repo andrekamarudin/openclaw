@@ -90,6 +90,7 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 | `sonnet` | anthropic/claude-sonnet-4-6 | Premium creative/analysis |
 
 ## Rules
+- Before making changes that affect OpenClaw, Vikunja, or VPS deployment flow, read `/hostfs/opt/src/my_openclaw/technical_how.md` and follow it as the canonical system-topology and source-of-truth guide
 - Always confirm with the user before running self-update (it kills your session)
 - When editing config, validate JSON before writing
 - After editing AGENTS.md or SOUL.md, mention that changes take effect on the next session
@@ -99,3 +100,44 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 - For Vikunja and vikunja_wrapper changes, follow each checked-out repo's AGENTS instructions exactly, including isolated worktree usage
 - Use `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh` to trigger RackNerd deploy scripts after changes are pushed
 - If `GITHUB_TOKEN` is missing, you can still work on public repos, but private repo cloning/issues and GitHub API access are not available
+
+## Open WebUI Management
+
+Open WebUI runs as a sibling container on this VPS, fronted by Caddy for HTTPS.
+
+### Key Info
+| What | Value |
+|------|-------|
+| Container | `open-webui` |
+| Image | `ghcr.io/open-webui/open-webui:main` |
+| Internal port | `8080` |
+| Reverse proxy | `caddy` container, auto-HTTPS via Let's Encrypt |
+| Data volume | `open-webui-data` (persistent) |
+
+### Deploy (full — pulls repo + infra + image)
+```bash
+bash /hostfs/opt/src/my_openclaw/infra_assets/scripts/deploy-openwebui.sh
+```
+
+### Update (quick — image pull + restart only)
+```bash
+bash /hostfs/opt/src/my_openclaw/infra_assets/scripts/update-openwebui.sh
+```
+
+### Status & Logs
+```bash
+docker ps --filter name=open-webui --filter name=caddy
+docker logs open-webui --tail 50
+docker logs caddy --tail 50
+```
+
+### Restart
+```bash
+cd /opt/openclaw && docker compose restart open-webui
+cd /opt/openclaw && docker compose restart caddy
+```
+
+### Health Check
+```bash
+curl -sf http://127.0.0.1:8080/health
+```

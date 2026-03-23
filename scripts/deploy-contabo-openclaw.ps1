@@ -104,7 +104,7 @@ try {
 	}
 
 	Write-Host 'Running deploy from pushed repo snapshot + local .env ...'
-	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker compose pull openclaw-gateway; docker compose up -d --no-deps openclaw-gateway; chown -R 1000:1000 /root/.openclaw"
+	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker compose pull openclaw-gateway open-webui caddy; docker compose up -d --no-deps openclaw-gateway; docker compose up -d open-webui caddy; chown -R 1000:1000 /root/.openclaw"
 	$deployResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 180000)
 	if ($deployResult.ExitStatus -ne 0) {
 		throw ($deployResult.Output -join [Environment]::NewLine)
@@ -115,6 +115,15 @@ try {
 	$healthResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $healthCommand -TimeOut 130000)
 	if ($healthResult.ExitStatus -ne 0) {
 		throw 'New OpenClaw instance did not become healthy.'
+	}
+
+	Write-Host 'Checking Open WebUI health ...'
+	$webuiHealthCommand = "bash -lc 'for attempt in `$(seq 1 24); do if curl -sf http://127.0.0.1:8080/health; then exit 0; fi; sleep 5; done; exit 1'"
+	$webuiHealthResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $webuiHealthCommand -TimeOut 130000)
+	if ($webuiHealthResult.ExitStatus -ne 0) {
+		Write-Host 'WARNING: Open WebUI did not become healthy. Check logs with: docker logs open-webui'
+	} else {
+		Write-Host 'Open WebUI is healthy.'
 	}
 
 	Write-Host 'New OpenClaw instance is healthy. Stopping old OpenClaw on vikunja-prod to avoid Telegram bot duplication ...'

@@ -21,6 +21,7 @@ Current production targets:
 
 - `compose/docker-compose.yml` -> `/opt/openclaw/docker-compose.yml`
 - `compose/docker-compose.build.yml` -> `/opt/openclaw/docker-compose.build.yml`
+- `caddy/Caddyfile` -> `/opt/openclaw/Caddyfile`
 - `scripts/self-update.sh` -> `/opt/openclaw/self-update.sh`
 - `config/openclaw.json.template` -> `/root/.openclaw/openclaw.json` (seed only, won't overwrite)
 - `workspace/AGENTS.md` -> `/root/.openclaw/workspace/AGENTS.md` (always synced)
