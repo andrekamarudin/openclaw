@@ -93,7 +93,10 @@ fi
 CADDYFILE_SRC="$OC_REPO_DIR/infra_assets/caddy/Caddyfile"
 CADDYFILE_DST="$OC_ROOT_DIR/Caddyfile"
 if [ -f "$CADDYFILE_SRC" ]; then
-    cp "$CADDYFILE_SRC" "$CADDYFILE_DST"
+    if [ -d "$CADDYFILE_DST" ]; then
+        rm -rf "$CADDYFILE_DST"
+    fi
+    install -m 0644 "$CADDYFILE_SRC" "$CADDYFILE_DST"
     echo "Deployed Caddyfile"
     # Reload Caddy if the container is running
     if docker ps --filter name=caddy --format '{{.Names}}' 2>/dev/null | grep -q caddy; then
