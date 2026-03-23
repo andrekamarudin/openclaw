@@ -116,5 +116,28 @@ services:
       retries: 5
       start_period: 30s
 
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr
+    ports:
+      - "127.0.0.1:7575:7575"
+    volumes:
+      - /opt/homarr/appdata:/appdata
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: ${OPENCLAW_TZ:-Asia/Singapore}
+    restart: unless-stopped
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - /opt/uptime-kuma:/app/data
+    environment:
+      TZ: ${OPENCLAW_TZ:-Asia/Singapore}
+    restart: unless-stopped
+
 volumes:
   open-webui-data:

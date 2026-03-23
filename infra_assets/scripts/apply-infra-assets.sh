@@ -23,6 +23,10 @@ SCRIPT_NAMES=(
     deploy-openwebui.sh
     enable-openwebui-nginx.sh
     update-openwebui.sh
+    deploy-homarr.sh
+    enable-homarr-nginx.sh
+    deploy-uptime-kuma.sh
+    enable-uptime-kuma-nginx.sh
     self-update.sh
 )
 
@@ -115,6 +119,60 @@ if [ -n "$OPENWEBUI_DOMAIN" ] && [ -f "$OPENWEBUI_NGINX_HTTP_SRC" ]; then
         nginx -t
         systemctl reload nginx
         echo "Deployed nginx site for $OPENWEBUI_DOMAIN"
+    fi
+fi
+
+# --- Nginx site for Homarr ---
+HOMARR_DOMAIN="${HOMARR_DOMAIN:-}"
+HOMARR_NGINX_HTTP_SRC="$OC_REPO_DIR/infra_assets/nginx/homarr-http.conf"
+HOMARR_NGINX_HTTPS_SRC="$OC_REPO_DIR/infra_assets/nginx/homarr-https.conf"
+
+if [ -n "$HOMARR_DOMAIN" ] && [ -f "$HOMARR_NGINX_HTTP_SRC" ]; then
+    NGINX_SITE_AVAILABLE="/etc/nginx/sites-available/$HOMARR_DOMAIN.conf"
+    NGINX_SITE_ENABLED="/etc/nginx/sites-enabled/$HOMARR_DOMAIN.conf"
+    CERT_DIR="/etc/letsencrypt/live/$HOMARR_DOMAIN"
+
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ] && [ -f "$HOMARR_NGINX_HTTPS_SRC" ]; then
+        envsubst '${HOMARR_DOMAIN}' < "$HOMARR_NGINX_HTTPS_SRC" > "$NGINX_SITE_AVAILABLE"
+    else
+        envsubst '${HOMARR_DOMAIN}' < "$HOMARR_NGINX_HTTP_SRC" > "$NGINX_SITE_AVAILABLE"
+    fi
+
+    ln -sfn "$NGINX_SITE_AVAILABLE" "$NGINX_SITE_ENABLED"
+
+    if command -v nginx >/dev/null 2>&1; then
+        nginx -t
+        systemctl reload nginx
+        echo "Deployed nginx site for $HOMARR_DOMAIN"
+    fi
+fi
+
+# --- Nginx site for Uptime Kuma ---
+UPTIME_KUMA_DOMAIN="${UPTIME_KUMA_DOMAIN:-}"
+UPTIME_KUMA_NGINX_HTTP_SRC="$OC_REPO_DIR/infra_assets/nginx/uptime-kuma-http.conf"
+UPTIME_KUMA_NGINX_HTTPS_SRC="$OC_REPO_DIR/infra_assets/nginx/uptime-kuma-https.conf"
+
+if [ -n "$UPTIME_KUMA_DOMAIN" ] && [ -f "$UPTIME_KUMA_NGINX_HTTP_SRC" ]; then
+    NGINX_SITE_AVAILABLE="/etc/nginx/sites-available/$UPTIME_KUMA_DOMAIN.conf"
+    NGINX_SITE_ENABLED="/etc/nginx/sites-enabled/$UPTIME_KUMA_DOMAIN.conf"
+    CERT_DIR="/etc/letsencrypt/live/$UPTIME_KUMA_DOMAIN"
+
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ] && [ -f "$UPTIME_KUMA_NGINX_HTTPS_SRC" ]; then
+        envsubst '${UPTIME_KUMA_DOMAIN}' < "$UPTIME_KUMA_NGINX_HTTPS_SRC" > "$NGINX_SITE_AVAILABLE"
+    else
+        envsubst '${UPTIME_KUMA_DOMAIN}' < "$UPTIME_KUMA_NGINX_HTTP_SRC" > "$NGINX_SITE_AVAILABLE"
+    fi
+
+    ln -sfn "$NGINX_SITE_AVAILABLE" "$NGINX_SITE_ENABLED"
+
+    if command -v nginx >/dev/null 2>&1; then
+        nginx -t
+        systemctl reload nginx
+        echo "Deployed nginx site for $UPTIME_KUMA_DOMAIN"
     fi
 fi
 

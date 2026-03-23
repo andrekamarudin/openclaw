@@ -38,6 +38,12 @@ Same pattern as Vikunja: **local changes → push → SSH pull → deploy**.
 
 # Quick Open WebUI image update only
 /opt/src/my_openclaw/infra_assets/scripts/update-openwebui.sh
+
+# Deploy Homarr dashboard
+/opt/src/my_openclaw/infra_assets/scripts/deploy-homarr.sh
+
+# Deploy Uptime Kuma monitoring
+/opt/src/my_openclaw/infra_assets/scripts/deploy-uptime-kuma.sh
 ```
 
 ### Deploy from local PowerShell
@@ -71,17 +77,21 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-openclaw.ps1
 Telegram (@drekian_oc_bot)
         │
         ▼
-┌──────────────────────────────────┐
-│   Contabo VPS (46.250.234.28)   │
-│   Ubuntu 24.04 · 12GB RAM       │
-│                                  │
-│   openclaw-gateway  :18789/18790 │
-│   openclaw-cli                   │
-│   open-webui        :3000 (loopback)
-│   nginx             :80/443      │
-│                                  │
-│   nginx -> open-webui (HTTPS)    │
-└──────────────────────────────────┘
+┌──────────────────────────────────────┐
+│   Contabo VPS (46.250.234.28)        │
+│   Ubuntu 24.04 · 12GB RAM            │
+│                                      │
+│   openclaw-gateway  :18789/18790     │
+│   openclaw-cli                       │
+│   open-webui        :3000 (loopback) │
+│   homarr            :7575 (loopback) │
+│   uptime-kuma       :3001 (loopback) │
+│   nginx             :80/443          │
+│                                      │
+│   nginx -> open-webui (HTTPS)        │
+│   nginx -> homarr    (HTTPS)         │
+│   nginx -> uptime-kuma (HTTPS)       │
+└──────────────────────────────────────┘
 ```
 
 ---
@@ -122,7 +132,11 @@ Telegram (@drekian_oc_bot)
 | `/opt/openclaw/docker-compose.yml` | Docker Compose stack definition |
 | `/opt/openclaw/.env` | API keys and env vars for Docker |
 | `/etc/nginx/sites-available/openwebui.bytesizeprotip.com.conf` | nginx reverse proxy config for Open WebUI |
+| `/etc/nginx/sites-available/home.bytesizeprotip.com.conf` | nginx reverse proxy config for Homarr |
+| `/etc/nginx/sites-available/status.bytesizeprotip.com.conf` | nginx reverse proxy config for Uptime Kuma |
 | `/opt/openclaw/self-update.sh` | Agent self-redeploy script (mounted into container) |
+| `/opt/homarr/appdata` | Homarr data (configs, icons) |
+| `/opt/uptime-kuma` | Uptime Kuma data (monitors, notification settings) |
 | `/root/.openclaw/openclaw.json` | OpenClaw runtime config (models, channels, gateway) |
 | `/root/.openclaw/agents/main/sessions/` | Persisted chat sessions |
 | `/root/.openclaw/workspace/` | Agent workspace (AGENTS.md, MEMORY.md, etc.) |
