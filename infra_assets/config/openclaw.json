@@ -58,7 +58,7 @@
       "enabled": true,
       "dmPolicy": "allowlist",
       "botToken": "${TELEGRAM_BOT_TOKEN}",
-      "groupPolicy": "disabled",
+      "groupPolicy": "open",
       "streaming": "partial",
       "allowFrom": [
         876499264
