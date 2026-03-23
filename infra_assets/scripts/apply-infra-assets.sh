@@ -21,6 +21,7 @@ SCRIPT_NAMES=(
     deploy-build-openclaw.sh
     update-openclaw.sh
     deploy-openwebui.sh
+    enable-openwebui-nginx.sh
     update-openwebui.sh
     self-update.sh
 )
@@ -89,19 +90,31 @@ if [ -d "$WORKSPACE_SRC/skills" ]; then
     cp -R "$WORKSPACE_SRC/skills/." "$WORKSPACE_DIR/skills/"
 fi
 
-# --- Caddyfile ---
-CADDYFILE_SRC="$OC_REPO_DIR/infra_assets/caddy/Caddyfile"
-CADDYFILE_DST="$OC_ROOT_DIR/Caddyfile"
-if [ -f "$CADDYFILE_SRC" ]; then
-    if [ -d "$CADDYFILE_DST" ]; then
-        rm -rf "$CADDYFILE_DST"
+# --- Nginx site for Open WebUI ---
+OPENWEBUI_DOMAIN="${OPENWEBUI_DOMAIN:-}"
+OPENWEBUI_BIND_PORT="${OPENWEBUI_BIND_PORT:-3000}"
+OPENWEBUI_NGINX_HTTP_SRC="$OC_REPO_DIR/infra_assets/nginx/openwebui-http.conf"
+OPENWEBUI_NGINX_HTTPS_SRC="$OC_REPO_DIR/infra_assets/nginx/openwebui-https.conf"
+
+if [ -n "$OPENWEBUI_DOMAIN" ] && [ -f "$OPENWEBUI_NGINX_HTTP_SRC" ]; then
+    NGINX_SITE_AVAILABLE="/etc/nginx/sites-available/$OPENWEBUI_DOMAIN.conf"
+    NGINX_SITE_ENABLED="/etc/nginx/sites-enabled/$OPENWEBUI_DOMAIN.conf"
+    CERT_DIR="/etc/letsencrypt/live/$OPENWEBUI_DOMAIN"
+
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ] && [ -f "$OPENWEBUI_NGINX_HTTPS_SRC" ]; then
+        envsubst '${OPENWEBUI_DOMAIN} ${OPENWEBUI_BIND_PORT}' < "$OPENWEBUI_NGINX_HTTPS_SRC" > "$NGINX_SITE_AVAILABLE"
+    else
+        envsubst '${OPENWEBUI_DOMAIN} ${OPENWEBUI_BIND_PORT}' < "$OPENWEBUI_NGINX_HTTP_SRC" > "$NGINX_SITE_AVAILABLE"
     fi
-    install -m 0644 "$CADDYFILE_SRC" "$CADDYFILE_DST"
-    echo "Deployed Caddyfile"
-    # Reload Caddy if the container is running
-    if docker ps --filter name=caddy --format '{{.Names}}' 2>/dev/null | grep -q caddy; then
-        docker exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2>/dev/null || true
-        echo "Caddy reloaded"
+
+    ln -sfn "$NGINX_SITE_AVAILABLE" "$NGINX_SITE_ENABLED"
+
+    if command -v nginx >/dev/null 2>&1; then
+        nginx -t
+        systemctl reload nginx
+        echo "Deployed nginx site for $OPENWEBUI_DOMAIN"
     fi
 fi
 

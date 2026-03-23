@@ -15,7 +15,6 @@ cd "$OC_ROOT_DIR"
 docker compose pull open-webui
 docker compose up -d --no-deps open-webui
 
-# Ensure Caddy is running
-docker compose up -d caddy
+bash "$OC_REPO_DIR/infra_assets/scripts/enable-openwebui-nginx.sh"
 
 echo "Open WebUI deploy complete"

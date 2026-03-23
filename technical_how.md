@@ -40,16 +40,16 @@ Important live paths:
 
 - `/opt/src/my_openclaw` - checkout of the infra repo for OpenClaw
 - `/opt/src/openclaw` - checkout of the OpenClaw app fork for source builds
-- `/opt/openclaw` - live OpenClaw Compose stack directory (also hosts Open WebUI + Caddy)
-- `/opt/openclaw/Caddyfile` - Caddy reverse proxy config (synced from repo)
+- `/opt/openclaw` - live OpenClaw Compose stack directory (also hosts Open WebUI)
+- `/etc/nginx/sites-available/*.conf` - host nginx virtual-host configs for public endpoints
 - `/root/.openclaw` - live OpenClaw runtime config, sessions, workspace, and credentials
 
 Containers on this VPS:
 
 - `openclaw-gateway` — the AI assistant (ports 18789/18790)
 - `openclaw-cli` — CLI companion (shares gateway network)
-- `open-webui` — multi-user LLM chat UI (internal port 8080, fronted by Caddy)
-- `caddy` — reverse proxy providing HTTPS for Open WebUI (ports 80/443)
+- `open-webui` — multi-user LLM chat UI (container port 8080, bound to localhost on the host)
+- `nginx` — host reverse proxy providing HTTPS for Open WebUI and OpenClaw domains
 
 ### Vikunja VPS (2 GB RAM)
 
@@ -84,7 +84,7 @@ These rules are the main protection against conflicting deploys and server drift
 Repo-managed means things like:
 
 - Compose files
-- Caddy config
+- reverse-proxy config
 - deploy scripts
 - config templates
 - wrapper source code
@@ -115,7 +115,7 @@ Normal SSH uses:
 SSH should usually not be used for:
 
 - editing checked-in source files directly on the server
-- editing repo-managed Caddy or Compose files by hand
+- editing repo-managed reverse-proxy or Compose files by hand
 - making a quick server-only fix and leaving Git behind
 
 ## OpenClaw Deployment Model
@@ -154,20 +154,20 @@ Operational rule:
 
 ## Open WebUI Deployment Model
 
-Open WebUI runs on the same Contabo VPS as OpenClaw, in a separate container fronted by Caddy for HTTPS.
+Open WebUI runs on the same Contabo VPS as OpenClaw, in a separate container published on localhost and fronted by the host nginx service for HTTPS.
 
 - Image: `ghcr.io/open-webui/open-webui:main` (official, no Ollama)
-- Reverse proxy: Caddy container with auto-HTTPS via Let's Encrypt
-- All infra is managed in `my_openclaw` (Compose, Caddyfile, deploy scripts, env vars)
+- Reverse proxy: host nginx with certbot-managed TLS
+- All infra is managed in `my_openclaw` (Compose, nginx templates, deploy scripts, env vars)
 - Signup is disabled — admin creates accounts manually
 
 Deploy scripts:
 
 - Full deploy: `infra_assets/scripts/deploy-openwebui.sh` (git pull → apply-infra-assets → pull image → restart)
 - Quick update: `infra_assets/scripts/update-openwebui.sh` (pull image → restart only)
-- Bootstrap: `scripts/deploy-contabo-openclaw.ps1` also starts Open WebUI and Caddy
+- Bootstrap: `scripts/deploy-contabo-openclaw.ps1` starts Open WebUI and configures nginx + TLS
 
-The Caddyfile at `infra_assets/caddy/Caddyfile` is synced to `/opt/openclaw/Caddyfile` by `apply-infra-assets.sh` and mounted into the Caddy container.
+The nginx templates under `infra_assets/nginx/` are synced by `apply-infra-assets.sh`. Before a certificate exists, the HTTP-only template is deployed; after certbot issues a certificate, the HTTPS template becomes the repo-managed source of truth.
 
 ## Vikunja Deployment Model
 

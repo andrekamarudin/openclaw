@@ -103,15 +103,15 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 
 ## Open WebUI Management
 
-Open WebUI runs as a sibling container on this VPS, fronted by Caddy for HTTPS.
+Open WebUI runs as a sibling container on this VPS, published on localhost and fronted by the host nginx service for HTTPS.
 
 ### Key Info
 | What | Value |
 |------|-------|
 | Container | `open-webui` |
 | Image | `ghcr.io/open-webui/open-webui:main` |
-| Internal port | `8080` |
-| Reverse proxy | `caddy` container, auto-HTTPS via Let's Encrypt |
+| Host bind | `127.0.0.1:3000 -> 8080` |
+| Reverse proxy | host `nginx`, certbot-managed HTTPS |
 | Data volume | `open-webui-data` (persistent) |
 
 ### Deploy (full — pulls repo + infra + image)
@@ -126,18 +126,18 @@ bash /hostfs/opt/src/my_openclaw/infra_assets/scripts/update-openwebui.sh
 
 ### Status & Logs
 ```bash
-docker ps --filter name=open-webui --filter name=caddy
+docker ps --filter name=open-webui
 docker logs open-webui --tail 50
-docker logs caddy --tail 50
+journalctl -u nginx --since '15 minutes ago'
 ```
 
 ### Restart
 ```bash
 cd /opt/openclaw && docker compose restart open-webui
-cd /opt/openclaw && docker compose restart caddy
+systemctl reload nginx
 ```
 
 ### Health Check
 ```bash
-curl -sf http://127.0.0.1:8080/health
+curl -sf http://127.0.0.1:3000/health
 ```

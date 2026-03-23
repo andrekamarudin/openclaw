@@ -76,7 +76,7 @@ git -C $repoRoot archive --format=tar --output=$archivePath HEAD
 $securePassword = ConvertTo-SecureString $envMap['CONTABO_MY_SERVER_PASSWORD'] -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($userName, $securePassword)
 
-$bootstrapScript = "set -euo pipefail; export DEBIAN_FRONTEND=noninteractive; apt-get update; apt-get install -y ca-certificates curl git gettext-base; if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sh; systemctl enable --now docker; fi; mkdir -p '$remoteRootDir' /opt/src /root/.openclaw"
+$bootstrapScript = "set -euo pipefail; export DEBIAN_FRONTEND=noninteractive; apt-get update; apt-get install -y ca-certificates curl git gettext-base certbot python3-certbot-nginx; if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sh; systemctl enable --now docker; fi; mkdir -p '$remoteRootDir' /opt/src /root/.openclaw"
 
 $session = $null
 
@@ -104,8 +104,8 @@ try {
 	}
 
 	Write-Host 'Running deploy from pushed repo snapshot + local .env ...'
-	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker compose pull openclaw-gateway open-webui caddy; docker compose up -d --no-deps openclaw-gateway; docker compose up -d open-webui caddy; chown -R 1000:1000 /root/.openclaw"
-	$deployResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 180000)
+	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker rm -f caddy >/dev/null 2>&1 || true; docker compose pull openclaw-gateway open-webui; docker compose up -d --no-deps openclaw-gateway; docker compose up -d open-webui; bash '$remoteRepoDir/infra_assets/scripts/enable-openwebui-nginx.sh'; chown -R 1000:1000 /root/.openclaw"
+	$deployResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 300000)
 	if ($deployResult.ExitStatus -ne 0) {
 		throw ($deployResult.Output -join [Environment]::NewLine)
 	}
@@ -118,7 +118,9 @@ try {
 	}
 
 	Write-Host 'Checking Open WebUI health ...'
-	$webuiHealthCommand = "bash -lc 'for attempt in `$(seq 1 24); do if curl -sf http://127.0.0.1:8080/health; then exit 0; fi; sleep 5; done; exit 1'"
+	$webuiHealthCommand = @'
+bash -lc 'set -a; . "{0}/.env"; set +a; PORT=${{OPENWEBUI_BIND_PORT:-3000}}; for attempt in $(seq 1 24); do if curl -sf http://127.0.0.1:$PORT/health; then exit 0; fi; sleep 5; done; exit 1'
+'@ -f $remoteRootDir
 	$webuiHealthResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $webuiHealthCommand -TimeOut 130000)
 	if ($webuiHealthResult.ExitStatus -ne 0) {
 		Write-Host 'WARNING: Open WebUI did not become healthy. Check logs with: docker logs open-webui'

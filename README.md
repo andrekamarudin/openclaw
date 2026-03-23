@@ -33,7 +33,7 @@ Same pattern as Vikunja: **local changes → push → SSH pull → deploy**.
 # Source build deploy (when you have app code changes in your fork)
 /opt/src/my_openclaw/infra_assets/scripts/deploy-build-openclaw.sh
 
-# Deploy Open WebUI: pull repo + latest image + ensure Caddy running
+# Deploy Open WebUI: pull repo + latest image + ensure nginx + cert are configured
 /opt/src/my_openclaw/infra_assets/scripts/deploy-openwebui.sh
 
 # Quick Open WebUI image update only
@@ -77,10 +77,10 @@ Telegram (@drekian_oc_bot)
 │                                  │
 │   openclaw-gateway  :18789/18790 │
 │   openclaw-cli                   │
-│   open-webui        :8080 (int)  │
-│   caddy             :80/443      │
+│   open-webui        :3000 (loopback)
+│   nginx             :80/443      │
 │                                  │
-│   Caddy -> open-webui (HTTPS)    │
+│   nginx -> open-webui (HTTPS)    │
 └──────────────────────────────────┘
 ```
 
@@ -121,7 +121,7 @@ Telegram (@drekian_oc_bot)
 |------|---------|
 | `/opt/openclaw/docker-compose.yml` | Docker Compose stack definition |
 | `/opt/openclaw/.env` | API keys and env vars for Docker |
-| `/opt/openclaw/Caddyfile` | Caddy reverse proxy config (synced from repo) |
+| `/etc/nginx/sites-available/openwebui.bytesizeprotip.com.conf` | nginx reverse proxy config for Open WebUI |
 | `/opt/openclaw/self-update.sh` | Agent self-redeploy script (mounted into container) |
 | `/root/.openclaw/openclaw.json` | OpenClaw runtime config (models, channels, gateway) |
 | `/root/.openclaw/agents/main/sessions/` | Persisted chat sessions |
