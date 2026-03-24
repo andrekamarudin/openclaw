@@ -64,6 +64,42 @@ Controls how bot responses are streamed in Telegram.
 | `"full"` | Send the complete response as a single message |
 | `"disabled"` | No streaming |
 
+### groups (per-group settings)
+
+The `groups` object lets you configure per-group behavior. Use `"*"` as a wildcard key to set defaults for all groups.
+
+#### requireMention
+
+Controls whether the bot requires an @mention to respond in group chats.
+
+| Value | Behavior |
+|-------|----------|
+| `true` | Bot only responds when @mentioned or replied to (default) |
+| `false` | Bot responds to every message in the group |
+
+**Priority order** (first defined wins):
+1. Topic-specific override (`groups[chatId].topics[topicId].requireMention`)
+2. Group-specific override (`groups[chatId].requireMention`)
+3. Wildcard group default (`groups["*"].requireMention`)
+4. OpenClaw built-in default (`true`)
+
+Example — respond to all messages in all groups:
+```json
+"groups": {
+  "*": {
+    "requireMention": false
+  }
+}
+```
+
+Example — respond to all messages in one group, mention-only everywhere else:
+```json
+"groups": {
+  "*": { "requireMention": true },
+  "-1001234567890": { "requireMention": false }
+}
+```
+
 ## How to Inspect Current Settings
 
 ```bash
@@ -99,6 +135,21 @@ jq '.channels.telegram.allowFrom += [123456789]' /home/node/.openclaw/openclaw.j
 jq '.channels.telegram.dmPolicy = "open"' /home/node/.openclaw/openclaw.json > /tmp/oc-config.json && mv /tmp/oc-config.json /home/node/.openclaw/openclaw.json
 ```
 
+**Respond to all messages (no @mention needed):**
+```bash
+jq '.channels.telegram.groups["*"].requireMention = false' /home/node/.openclaw/openclaw.json > /tmp/oc-config.json && mv /tmp/oc-config.json /home/node/.openclaw/openclaw.json
+```
+
+**Require @mention to respond (default):**
+```bash
+jq '.channels.telegram.groups["*"].requireMention = true' /home/node/.openclaw/openclaw.json > /tmp/oc-config.json && mv /tmp/oc-config.json /home/node/.openclaw/openclaw.json
+```
+
+**Respond to all messages in a specific group only:**
+```bash
+jq '.channels.telegram.groups["-1001234567890"].requireMention = false' /home/node/.openclaw/openclaw.json > /tmp/oc-config.json && mv /tmp/oc-config.json /home/node/.openclaw/openclaw.json
+```
+
 ## How to Apply Changes
 
 After editing the config, restart the gateway so it picks up the new settings:
@@ -119,11 +170,13 @@ Check these in order:
 
 1. **groupPolicy** — Must be `"open"` or `"allowlist"` (with the group ID listed). If `"disabled"`, the bot silently ignores all group messages.
 
-2. **Telegram Privacy Mode** (BotFather setting) — If privacy mode is enabled, the bot only sees messages that start with `/` or `@mention` the bot. This is a Telegram API-level setting, not an OpenClaw setting. Andre must change it via @BotFather → /mybots → Bot Settings → Group Privacy → Turn off.
+2. **requireMention** — If `true` (default), the bot only responds to @mentions and replies to its own messages. Set to `false` in `groups["*"]` to respond to all messages. Check with: `jq '.channels.telegram.groups' /home/node/.openclaw/openclaw.json`
 
-3. **Bot was removed and re-added** — Removing and re-adding the bot to a group can reset its permissions. The bot may need to be re-added as an admin or privacy mode toggled off again after re-adding.
+3. **Telegram Privacy Mode** (BotFather setting) — If privacy mode is enabled, the bot literally does not receive non-@mention messages from Telegram's API. This is separate from `requireMention`. Even with `requireMention: false`, the bot won't see messages if BotFather privacy mode is on. Andre must change it via @BotFather → /mybots → Bot Settings → Group Privacy → Turn off.
 
-4. **Bot admin status** — Some groups require bots to be admins to see all messages. Check with Andre if the bot has admin rights in the target group.
+4. **Bot was removed and re-added** — Removing and re-adding the bot to a group can reset its admin permissions and re-enable privacy mode. The bot may need to be re-added as an admin or privacy mode toggled off again in BotFather after re-adding.
+
+5. **Bot admin status** — Some groups require bots to be admins to see all messages. Check with Andre if the bot has admin rights in the target group.
 
 ## Troubleshooting: Bot Not Responding in DMs
 

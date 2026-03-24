@@ -62,7 +62,12 @@
       "streaming": "partial",
       "allowFrom": [
         876499264
-      ]
+      ],
+      "groups": {
+        "*": {
+          "requireMention": false
+        }
+      }
     }
   },
   "gateway": {
