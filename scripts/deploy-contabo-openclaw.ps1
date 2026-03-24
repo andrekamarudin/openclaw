@@ -104,7 +104,7 @@ try {
 	}
 
 	Write-Host 'Running deploy from pushed repo snapshot + local .env ...'
-	$deployCommand = "bash '$remoteRepoDir/infra_assets/scripts/apply-infra-assets.sh'; cd '$remoteRootDir'; docker rm -f caddy >/dev/null 2>&1 || true; docker compose pull openclaw-gateway open-webui; docker compose up -d --no-deps openclaw-gateway; docker compose up -d open-webui; bash '$remoteRepoDir/infra_assets/scripts/enable-openwebui-nginx.sh'; chown -R 1000:1000 /root/.openclaw"
+	$deployCommand = "bash '$remoteRepoDir/openclaw-infra/scripts/apply-openclaw-infra.sh'; cd '$remoteRootDir'; docker rm -f caddy >/dev/null 2>&1 || true; docker compose pull openclaw-gateway open-webui; docker compose up -d --no-deps openclaw-gateway; docker compose up -d open-webui; bash '$remoteRepoDir/openwebui/scripts/enable-openwebui-nginx.sh'; chown -R 1000:1000 /root/.openclaw"
 	$deployResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 300000)
 	if ($deployResult.ExitStatus -ne 0) {
 		throw ($deployResult.Output -join [Environment]::NewLine)

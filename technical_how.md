@@ -23,6 +23,12 @@ In short: GitHub defines desired state, SSH applies desired state.
 - Local `.env` in `my_openclaw` is the source of truth for OpenClaw secrets and Contabo SSH access details.
 - `openclaw` is the app source repo used only when you need a source-build deployment instead of consuming the published image.
 
+Inside `my_openclaw`, the canonical layout is now:
+
+- `openclaw-infra/` - OpenClaw stack Compose files, config, workspace files, and OpenClaw deploy scripts
+- `openwebui/` - Open WebUI nginx templates, deploy scripts, and Open WebUI docs
+- `infra_assets/` - remaining shared assets and compatibility wrappers for services such as Homarr and Uptime Kuma
+
 ### Vikunja side
 
 - `vikunja_wrapper` is the source of truth for the wrapper app, wrapper-specific infra assets, deploy scripts, and reverse-proxy wiring.
@@ -137,13 +143,13 @@ Normal image-based OpenClaw deploy path:
 1. Update `my_openclaw` locally.
 2. Push to GitHub.
 3. Run `scripts/deploy-contabo-openclaw.ps1` locally or invoke the matching VPS deploy script over SSH.
-4. On the VPS, `/opt/src/my_openclaw/infra_assets/scripts/deploy-openclaw.sh` pulls repo changes, applies infra assets, updates the image if needed, and restarts the stack.
+4. On the VPS, `/opt/src/my_openclaw/openclaw-infra/scripts/deploy-openclaw.sh` pulls repo changes, applies repo-managed assets, updates the image if needed, and restarts the stack.
 
 Source-build OpenClaw deploy path:
 
 1. Update the `openclaw` fork locally.
 2. Push to GitHub.
-3. Run `/opt/src/my_openclaw/infra_assets/scripts/deploy-build-openclaw.sh` on the VPS.
+3. Run `/opt/src/my_openclaw/openclaw-infra/scripts/deploy-build-openclaw.sh` on the VPS.
 4. The VPS uses `/opt/src/openclaw` as build input and redeploys from source.
 
 Operational rule:
@@ -163,11 +169,11 @@ Open WebUI runs on the same Contabo VPS as OpenClaw, in a separate container pub
 
 Deploy scripts:
 
-- Full deploy: `infra_assets/scripts/deploy-openwebui.sh` (git pull → apply-infra-assets → pull image → restart)
-- Quick update: `infra_assets/scripts/update-openwebui.sh` (pull image → restart only)
+- Full deploy: `openwebui/scripts/deploy-openwebui.sh` (git pull → apply OpenClaw/Open WebUI assets → pull image → restart)
+- Quick update: `openwebui/scripts/update-openwebui.sh` (pull image → restart only)
 - Bootstrap: `scripts/deploy-contabo-openclaw.ps1` starts Open WebUI and configures nginx + TLS
 
-The nginx templates under `infra_assets/nginx/` are synced by `apply-infra-assets.sh`. Before a certificate exists, the HTTP-only template is deployed; after certbot issues a certificate, the HTTPS template becomes the repo-managed source of truth.
+The nginx templates under `openwebui/nginx/` are synced by `openclaw-infra/scripts/apply-openclaw-infra.sh`. Before a certificate exists, the HTTP-only template is deployed; after certbot issues a certificate, the HTTPS template becomes the repo-managed source of truth. The older `infra_assets/scripts/apply-infra-assets.sh` wrapper still exists for compatibility with shared-service callers.
 
 ## Vikunja Deployment Model
 

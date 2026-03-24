@@ -1,39 +1,39 @@
-## infra_assets
+# Shared Infra Assets
 
-Version-controlled source of truth for OpenClaw production infrastructure files.
+This directory is no longer the canonical home for OpenClaw or Open WebUI assets.
 
-Keep here:
+## What Still Lives Here
 
-- Docker Compose stack definition
-- Deploy helper scripts
-- OpenClaw config template (without secrets)
-- Agent workspace files (AGENTS.md, MEMORY.md)
-- Other small declarative server assets that should be reviewed in Git
+- Homarr nginx templates and deploy helpers
+- Uptime Kuma nginx templates and deploy helpers
+- Caddy-related files that are still referenced by other planning/docs work
+- Compatibility wrappers that preserve the older `infra_assets/scripts/...` entrypoints
 
-Do not keep here:
+## Canonical Locations Now
 
-- Secrets or API keys
-- Private SSH keys
-- Live `.env` files
-- Runtime-generated files
+- OpenClaw infra: `../openclaw-infra/`
+- Open WebUI assets: `../openwebui/`
 
-Current production targets:
+## Shared/Legacy Scripts
 
-- `compose/docker-compose.yml` -> `/opt/openclaw/docker-compose.yml`
-- `compose/docker-compose.build.yml` -> `/opt/openclaw/docker-compose.build.yml`
-- `nginx/openwebui-http.conf` -> `/etc/nginx/sites-available/<domain>.conf` (bootstrap HTTP config)
-- `nginx/openwebui-https.conf` -> `/etc/nginx/sites-available/<domain>.conf` (HTTPS config after cert issuance)
-- `scripts/self-update.sh` -> `/opt/openclaw/self-update.sh`
-- `config/openclaw.json.template` -> `/root/.openclaw/openclaw.json` (seed only, won't overwrite)
-- `workspace/AGENTS.md` -> `/root/.openclaw/workspace/AGENTS.md` (always synced)
-- `workspace/MEMORY.md` -> `/root/.openclaw/workspace/MEMORY.md` (seed only, won't overwrite)
+| Script | Role |
+|--------|------|
+| `scripts/apply-infra-assets.sh` | Compatibility wrapper that calls `openclaw-infra/scripts/apply-openclaw-infra.sh` and then applies the remaining shared nginx assets |
+| `scripts/deploy-homarr.sh` | Homarr deploy helper |
+| `scripts/deploy-uptime-kuma.sh` | Uptime Kuma deploy helper |
+| `scripts/enable-homarr-nginx.sh` | Homarr cert/nginx helper |
+| `scripts/enable-uptime-kuma-nginx.sh` | Uptime Kuma cert/nginx helper |
 
-Repo-managed operational scripts are executed in place from:
+## VPS Paths Still Managed From Here
 
+- `nginx/homarr-*.conf` -> `/etc/nginx/sites-available/<homarr-domain>.conf`
+- `nginx/uptime-kuma-*.conf` -> `/etc/nginx/sites-available/<uptime-kuma-domain>.conf`
 - `scripts/*.sh` -> `/opt/src/my_openclaw/infra_assets/scripts/*.sh`
 
-Sync these files onto the VPS with:
+## Compatibility Entry Point
 
 ```bash
 /opt/src/my_openclaw/infra_assets/scripts/apply-infra-assets.sh
 ```
+
+Use that only when you need the shared legacy behavior. For OpenClaw and Open WebUI work, use the new canonical folders directly.

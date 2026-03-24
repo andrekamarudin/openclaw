@@ -87,12 +87,12 @@ Andre creates accounts for family members. Each family member logs in with their
 - **FR-001**: Open WebUI MUST run as a separate container on the OpenClaw VPS (12 GB RAM) alongside OpenClaw, with independent lifecycle (start, stop, restart, update). Vikunja runs on a separate 2 GB VPS and is not affected.
 - **FR-002**: Open WebUI MUST persist conversations, user accounts, and settings across container restarts using a durable storage volume
 - **FR-003**: The deployment MUST follow the same GitHub-first model as OpenClaw: changes committed to `my_openclaw`, pushed to GitHub, pulled on the VPS, and applied via a deploy script
-- **FR-004**: The `my_openclaw` repo MUST contain all repo-managed assets for Open WebUI: Compose service definition, config templates, and deploy/update scripts under `infra_assets/`
+- **FR-004**: The `my_openclaw` repo MUST contain all repo-managed assets for Open WebUI: the shared Compose service definition under `openclaw-infra/compose/` and the nginx/deploy assets under `openwebui/`
 - **FR-005**: Secrets (API keys, admin credentials) MUST be stored outside of Git, in a VPS-side env file, consistent with the existing pattern
 - **FR-006**: Open WebUI MUST connect to remote LLM providers (OpenAI, Anthropic, OpenRouter, Groq) using the API keys already available on the VPS — no local model inference (Ollama) is required for the initial deployment
 - **FR-007**: Open WebUI MUST be accessible via a dedicated subdomain (e.g. `chat.yourdomain.com`) reverse-proxied through Caddy with automatic HTTPS, matching the existing Vikunja reverse-proxy pattern
 - **FR-008**: The Open WebUI container MUST auto-restart after VPS reboots or unexpected crashes
-- **FR-009**: The existing `apply-infra-assets.sh` script (or a companion) MUST sync Open WebUI assets alongside OpenClaw assets during deployment
+- **FR-009**: The existing OpenClaw asset-apply flow (`openclaw-infra/scripts/apply-openclaw-infra.sh`, or a compatibility wrapper) MUST sync Open WebUI assets alongside OpenClaw assets during deployment
 - **FR-010**: Open WebUI MUST support multiple users. Andre is the admin who creates accounts for family members. Public registration MUST be disabled; only admin-created accounts can access the service
 - **FR-011**: The Open WebUI container MUST be capped at 2 GB memory (mem_limit) with 4 GB swap (memswap_limit) on the 12 GB VPS, leaving headroom for OpenClaw and future apps
 - **FR-012**: The system MUST be designed so that future paid-customer access can be added without re-architecting (e.g. admin approval registration, per-user model access controls)
@@ -103,7 +103,7 @@ Andre creates accounts for family members. Each family member logs in with their
 - **Open WebUI Data Volume**: Persistent storage for conversations, user accounts, model configurations, and uploaded files
 - **Open WebUI Env File**: VPS-side secrets file (API keys, admin password) kept outside Git, similar to `/opt/openclaw/.env`
 - **Deploy Script**: A repo-managed shell script that pulls from GitHub, applies infra assets, and restarts the Open WebUI container
-- **Infra Assets**: Repo-managed Compose service definition, config templates, and operational scripts stored under `infra_assets/` in `my_openclaw`
+- **Infra Assets**: Repo-managed Compose service definition, config templates, nginx templates, and operational scripts stored under `openclaw-infra/` and `openwebui/` in `my_openclaw`
 
 ## Assumptions
 

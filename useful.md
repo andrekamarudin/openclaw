@@ -139,12 +139,12 @@ ssh vikunja-prod "rm -f /root/.openclaw/agents/main/sessions/*.jsonl && python3 
 
 ### Pull latest image and restart
 ```powershell
-ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/update-openclaw.sh"
+ssh vikunja-prod "/opt/src/my_openclaw/openclaw-infra/scripts/update-openclaw.sh"
 ```
 
 ### Full deploy (pull repo + apply infra + restart)
 ```powershell
-ssh vikunja-prod "/opt/src/my_openclaw/infra_assets/scripts/deploy-openclaw.sh"
+ssh vikunja-prod "/opt/src/my_openclaw/openclaw-infra/scripts/deploy-openclaw.sh"
 ```
 
 ### Ask the bot to update itself (from Telegram)

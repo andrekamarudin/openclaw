@@ -1,0 +1,143 @@
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:main}
+    container_name: openclaw-gateway
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      NODE_OPTIONS: "--max-old-space-size=1536"
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      SERPER_API_KEY: ${SERPER_API_KEY:-}
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TZ: ${OPENCLAW_TZ:-UTC}
+    env_file:
+      - .env
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-/root/.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-/root/.openclaw/workspace}:/home/node/.openclaw/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/openclaw/self-update.sh:/usr/local/bin/self-update.sh:ro
+    group_add:
+      - "${DOCKER_GID:-988}"
+    ports:
+      - "${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+      - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+    init: true
+    restart: unless-stopped
+    mem_limit: 1536m
+    memswap_limit: 3g
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind",
+        "lan",
+        "--port",
+        "18789",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  openclaw-cli:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:main}
+    container_name: openclaw-cli
+    network_mode: "service:openclaw-gateway"
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      SERPER_API_KEY: ${SERPER_API_KEY:-}
+      BROWSER: echo
+      TZ: ${OPENCLAW_TZ:-UTC}
+    env_file:
+      - .env
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-/root/.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-/root/.openclaw/workspace}:/home/node/.openclaw/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+    depends_on:
+      - openclaw-gateway
+
+  open-webui:
+    image: ${OPENWEBUI_IMAGE:-ghcr.io/open-webui/open-webui:main}
+    container_name: open-webui
+    environment:
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-}
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
+      ENABLE_OLLAMA_API: ${ENABLE_OLLAMA_API:-false}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-https://api.openai.com/v1}
+      TZ: ${OPENCLAW_TZ:-UTC}
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:${OPENWEBUI_BIND_PORT:-3000}:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    restart: unless-stopped
+    mem_limit: 2g
+    memswap_limit: 4g
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr
+    ports:
+      - "127.0.0.1:7575:7575"
+    volumes:
+      - /opt/homarr/appdata:/appdata
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: ${OPENCLAW_TZ:-Asia/Singapore}
+    restart: unless-stopped
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - /opt/uptime-kuma:/app/data
+    environment:
+      TZ: ${OPENCLAW_TZ:-Asia/Singapore}
+    restart: unless-stopped
+
+volumes:
+  open-webui-data:

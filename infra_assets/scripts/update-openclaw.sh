@@ -4,12 +4,6 @@ set -euo pipefail
 # Pull the latest OpenClaw image and restart.
 # Quick update without touching infra assets or repo.
 
-OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
 
-cd "$OC_ROOT_DIR"
-docker compose pull openclaw-gateway
-docker compose up -d --no-deps openclaw-gateway
-
-chown -R 1000:1000 /root/.openclaw
-
-echo "OpenClaw image update complete"
+bash "$OC_REPO_DIR/openclaw-infra/scripts/update-openclaw.sh"
