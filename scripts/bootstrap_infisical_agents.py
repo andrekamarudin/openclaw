@@ -9,6 +9,7 @@ Reads infisical_credentials.json and SSHes into each VPS to:
 Usage:
     python scripts/bootstrap_infisical_agents.py
 """
+
 import json
 import os
 import subprocess
@@ -44,7 +45,9 @@ INFISICAL_URL = "https://knives.bytesizeprotip.com"
 def ssh_run(host: str, cmd: str) -> tuple[int, str]:
     result = subprocess.run(
         ["ssh", host, cmd],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     return result.returncode, result.stdout + result.stderr
 
@@ -52,7 +55,9 @@ def ssh_run(host: str, cmd: str) -> tuple[int, str]:
 def scp_to(local_path: str, host: str, remote_path: str) -> int:
     result = subprocess.run(
         ["scp", local_path, f"{host}:{remote_path}"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     return result.returncode
 
@@ -79,9 +84,9 @@ def main():
         client_id = agent_creds["clientId"]
         client_secret = agent_creds["clientSecret"]
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Bootstrapping {agent_name} on {desc}")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
         # 1. Create /opt/config directory
         rc, out = ssh_run(ssh_host, "mkdir -p /opt/config")
@@ -100,36 +105,42 @@ def main():
 
         # Write via SSH (avoid temp file on Windows)
         escaped = agent_env_content.replace("'", "'\\''")
-        rc, out = ssh_run(ssh_host,
-            f"printf '%s' '{escaped}' > /opt/config/infisical-agent.env && chmod 600 /opt/config/infisical-agent.env")
+        rc, out = ssh_run(
+            ssh_host,
+            f"printf '%s' '{escaped}' > /opt/config/infisical-agent.env && chmod 600 /opt/config/infisical-agent.env",
+        )
         if rc != 0:
             print(f"  ERROR writing agent env: {out}")
             continue
-        print(f"  [OK] /opt/config/infisical-agent.env")
+        print("  [OK] /opt/config/infisical-agent.env")
 
         # 3. Upload infisical-env.sh helper
         rc = scp_to(HELPER_SCRIPT, ssh_host, "/opt/config/infisical-env.sh")
         if rc != 0:
-            print(f"  ERROR uploading helper script")
+            print("  ERROR uploading helper script")
             continue
 
         rc, out = ssh_run(ssh_host, "chmod +x /opt/config/infisical-env.sh")
-        print(f"  [OK] /opt/config/infisical-env.sh")
+        print("  [OK] /opt/config/infisical-env.sh")
 
         # 4. Verify connectivity
-        rc, out = ssh_run(ssh_host,
+        rc, out = ssh_run(
+            ssh_host,
             f"source /opt/config/infisical-env.sh && "
-            f"_infisical_get_token '{client_id}' '{client_secret}' '{INFISICAL_URL}' > /dev/null 2>&1 && echo OK || echo FAIL")
-        status = out.strip().split('\n')[-1]
+            f"_infisical_get_token '{client_id}' '{client_secret}' '{INFISICAL_URL}' > /dev/null 2>&1 && echo OK || echo FAIL",
+        )
+        status = out.strip().split("\n")[-1]
         if status == "OK":
-            print(f"  [OK] Infisical auth verified")
+            print("  [OK] Infisical auth verified")
         else:
             print(f"  [WARN] Auth check: {out.strip()}")
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("Bootstrap complete!")
-    print(f"{'='*50}")
-    print("\nNext: Update deploy scripts to call `infisical_fetch` before starting containers.")
+    print(f"{'=' * 50}")
+    print(
+        "\nNext: Update deploy scripts to call `infisical_fetch` before starting containers."
+    )
 
 
 if __name__ == "__main__":

@@ -1,11 +1,11 @@
 ---
 name: infra-overview
-description: Use when answering questions about Andre's self-hosted infrastructure, services, repos, VPS servers, or when you need to SSH into any VPS to inspect logs, status, or configuration. Covers all three VPSes (Contabo, RackNerd, GreenCloud) and all hosted services.
+description: Use when answering questions about Andre's self-hosted infrastructure, services, repos, VPS servers, or when you need to SSH into any VPS to inspect logs, status, or configuration. Covers all four VPSes (Contabo, RackNerd, GreenCloud, Hostinger) and all hosted services.
 ---
 
 # Infrastructure Overview
 
-Andre runs self-hosted services across three VPS providers. This skill gives you the full map so you can answer questions and inspect any server.
+Andre runs self-hosted services across four VPS providers. This skill gives you the full map so you can answer questions and inspect any server.
 
 ## VPS Inventory
 
@@ -67,7 +67,8 @@ curl -sf http://127.0.0.1:3001
 | Service | Container | Internal Port | URL |
 |---------|-----------|---------------|-----|
 | Vikunja (core) | `vikunja` | :3456 | `https://tasks.bytesizeprotip.com` |
-| Vikunja Wrapper | `vikunja-wrapper` | :8080 | `https://tasks.bytesizeprotip.com/llm` |
+| Vikunja Wrapper | `llm-chat` | :3000 | `https://tasks.bytesizeprotip.com/llm` |
+| Postiz | `postiz` | :5000 | `https://postiz.bytesizeprotip.com` |
 | Caddy | `caddy` | :80, :443 | (reverse proxy) |
 
 **SSH helper (preferred):**
@@ -116,7 +117,7 @@ curl -sf http://127.0.0.1:8080/health
 | Disks | 60 GB NVMe (OS) + 2 TB HDD (`/mnt/storage`) |
 | Reverse proxy | Caddy (containerized, auto HTTPS) |
 | Compose dir | `/opt/nextcloud/` |
-| Repo checkout | `/opt/src/greencloud_vps` |
+| Repo checkout | `/opt/src/greencloud` |
 | GitHub repo | `andrekamarudin/greencloud_vps` (private, `master`) |
 
 **Services on GreenCloud:**
@@ -147,6 +148,26 @@ fail2ban-client status nextcloud
 
 ---
 
+---
+
+### 4. Hostinger VPS (n8n automation)
+
+| Item | Value |
+|------|-------|
+| IP | `31.97.71.85` |
+| SSH | `ssh hostinger` (uses `~/.ssh/config` alias) |
+| Hostname | `srv935644.hstgr.cloud` |
+
+**Services on Hostinger:**
+
+| Service | URL |
+|---------|-----|
+| n8n | `https://n8n.srv935644.hstgr.cloud` |
+
+**Managed via:** Hostinger API + direct SSH. Local management repo: `hostinger/` (GitHub: `hk_hostinger`).
+
+---
+
 ## DNS Records (all under `bytesizeprotip.com`)
 
 | Subdomain | A Record | VPS |
@@ -156,6 +177,7 @@ fail2ban-client status nextcloud
 | `home.bytesizeprotip.com` | `46.250.234.28` | Contabo |
 | `status.bytesizeprotip.com` | `46.250.234.28` | Contabo |
 | `tasks.bytesizeprotip.com` | `23.226.133.245` | RackNerd |
+| `postiz.bytesizeprotip.com` | `23.226.133.245` | RackNerd |
 | `nextcloud.bytesizeprotip.com` | `167.253.159.196` | GreenCloud |
 | `immich.bytesizeprotip.com` | `167.253.159.196` | GreenCloud |
 
@@ -166,12 +188,14 @@ fail2ban-client status nextcloud
 | `my_openclaw` | `andrekamarudin` (private) | `master` | Contabo VPS infra, OpenClaw config, workspace |
 | `vikunja_wrapper` | `andrekamarudin` (private) | `master` | Vikunja wrapper API, RackNerd deploy scripts |
 | `vikunja` | `go-vikunja` (public) | `main` | Vikunja core (upstream fork) |
-| `greencloud_vps` | `andrekamarudin` (private) | `master` | GreenCloud VPS infra, Nextcloud + Immich deploy |
+| `greencloud_vps` | `andrekamarudin` (private) | `master` | GreenCloud VPS infra, Nextcloud + Immich deploy (local folder: `greencloud/`) |
+| `hk_hostinger` | `andrekamarudin` (private) | `master` | Hostinger VPS management, n8n (local folder: `hostinger/`) |
 
 ## Source of Truth
 
 - **Code and infra config**: GitHub repos
-- **Secrets**: `.env` files on each VPS (not in Git)
+- **Non-secret config**: committed `.env` in each repo (URLs, ports, feature flags)
+- **Secrets**: Infisical at `https://knives.bytesizeprotip.com` — fetched by deploy scripts at runtime
 - **Deploy flow**: Push to GitHub → SSH to VPS → run deploy script → script does git pull + docker compose up
 - **Do NOT** hand-edit repo-managed files directly on VPSes
-- For the full operating model, read `/hostfs/opt/src/my_openclaw/technical_how.md`
+- For the full operating model, read `technical_how.md` at the `self_hosting` workspace root
