@@ -37,6 +37,20 @@ services:
     volumes:
       - karakeep-meilisearch:/meili_data
 
+  karakeep-wrapper:
+    build: /opt/src/karakeep_wrapper
+    container_name: karakeep-wrapper
+    restart: unless-stopped
+    env_file:
+      - /opt/config/karakeep_wrapper.env
+    volumes:
+      - karakeep-wrapper-data:/app/data
+    ports:
+      - "127.0.0.1:3459:3000"
+    depends_on:
+      - karakeep-web
+
 volumes:
   karakeep-data:
   karakeep-meilisearch:
+  karakeep-wrapper-data:
