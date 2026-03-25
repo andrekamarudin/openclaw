@@ -12,6 +12,8 @@ SCRIPT_NAMES=(
     apply-infra-assets.sh
     deploy-homarr.sh
     enable-homarr-nginx.sh
+    deploy-infisical.sh
+    enable-infisical-nginx.sh
     deploy-uptime-kuma.sh
     enable-uptime-kuma-nginx.sh
     deploy-vikunja.sh
@@ -51,6 +53,34 @@ if [ -n "$HOMARR_DOMAIN" ] && [ -f "$HOMARR_NGINX_HTTP_SRC" ]; then
         nginx -t
         systemctl reload nginx
         echo "Deployed nginx site for $HOMARR_DOMAIN"
+    fi
+fi
+
+# --- Nginx site for Infisical ---
+INFISICAL_DOMAIN="${INFISICAL_DOMAIN:-}"
+INFISICAL_BIND_PORT="${INFISICAL_BIND_PORT:-8081}"
+INFISICAL_NGINX_HTTP_SRC="$OC_REPO_DIR/infra_assets/nginx/infisical-http.conf"
+INFISICAL_NGINX_HTTPS_SRC="$OC_REPO_DIR/infra_assets/nginx/infisical-https.conf"
+
+if [ -n "$INFISICAL_DOMAIN" ] && [ -f "$INFISICAL_NGINX_HTTP_SRC" ]; then
+    NGINX_SITE_AVAILABLE="/etc/nginx/sites-available/$INFISICAL_DOMAIN.conf"
+    NGINX_SITE_ENABLED="/etc/nginx/sites-enabled/$INFISICAL_DOMAIN.conf"
+    CERT_DIR="/etc/letsencrypt/live/$INFISICAL_DOMAIN"
+
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ] && [ -f "$INFISICAL_NGINX_HTTPS_SRC" ]; then
+        envsubst '${INFISICAL_DOMAIN} ${INFISICAL_BIND_PORT}' < "$INFISICAL_NGINX_HTTPS_SRC" > "$NGINX_SITE_AVAILABLE"
+    else
+        envsubst '${INFISICAL_DOMAIN} ${INFISICAL_BIND_PORT}' < "$INFISICAL_NGINX_HTTP_SRC" > "$NGINX_SITE_AVAILABLE"
+    fi
+
+    ln -sfn "$NGINX_SITE_AVAILABLE" "$NGINX_SITE_ENABLED"
+
+    if command -v nginx >/dev/null 2>&1; then
+        nginx -t
+        systemctl reload nginx
+        echo "Deployed nginx site for $INFISICAL_DOMAIN"
     fi
 fi
 

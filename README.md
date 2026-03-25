@@ -8,7 +8,7 @@ GitHub-first deployment workspace for the Contabo OpenClaw stack.
 |------|---------|
 | `openclaw-infra/` | Canonical OpenClaw stack assets: shared Compose files, OpenClaw config/workspace, OpenClaw deploy scripts |
 | `openwebui/` | Canonical Open WebUI assets: nginx templates, deploy/update scripts, service-specific docs |
-| `infra_assets/` | Remaining shared and legacy assets for Homarr, Uptime Kuma, Caddy, and compatibility wrappers |
+| `infra_assets/` | Remaining shared and legacy assets for Homarr, Uptime Kuma, Infisical, Caddy, and compatibility wrappers |
 | `scripts/` | Local entrypoints such as the Contabo bootstrap/deploy PowerShell script |
 | `openclaw/` | OpenClaw app source checkout used only for source-build deployments |
 
@@ -39,6 +39,7 @@ GitHub-first deployment workspace for the Contabo OpenClaw stack.
 
 # Shared-service deploys that still live under infra_assets
 /opt/src/my_openclaw/infra_assets/scripts/deploy-homarr.sh
+/opt/src/my_openclaw/infra_assets/scripts/deploy-infisical.sh
 /opt/src/my_openclaw/infra_assets/scripts/deploy-uptime-kuma.sh
 ```
 
@@ -46,6 +47,7 @@ GitHub-first deployment workspace for the Contabo OpenClaw stack.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-openclaw.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-infisical.ps1
 ```
 
 ## Source Of Truth
@@ -62,11 +64,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-openclaw.ps1
 | `/opt/src/openclaw` | OpenClaw app source checkout for source builds |
 | `/opt/openclaw` | Live Compose stack directory |
 | `/opt/openclaw/.env` | Runtime env vars and secrets |
+| `/opt/infisical` | Infisical data directories for Postgres and Redis |
 | `/root/.openclaw` | OpenClaw runtime config, workspace, sessions, credentials |
 | `/etc/nginx/sites-available/*.conf` | Public vhost definitions for Open WebUI and sibling services |
 
 ## Notes
 
-- The shared Compose stack in `openclaw-infra/compose/docker-compose.yml` still defines OpenClaw, Open WebUI, and the sibling services that run from `/opt/openclaw`.
+- The shared Compose stack in `openclaw-infra/compose/docker-compose.yml` still defines OpenClaw, Open WebUI, and the sibling services that run from the Contabo host.
 - `infra_assets/scripts/apply-infra-assets.sh` remains as a compatibility wrapper for older callers and for the shared Homarr/Uptime Kuma nginx assets.
 - If you are changing deployment behavior, update `technical_how.md` in the same change.

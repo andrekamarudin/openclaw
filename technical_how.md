@@ -27,7 +27,7 @@ Inside `my_openclaw`, the canonical layout is now:
 
 - `openclaw-infra/` - OpenClaw stack Compose files, config, workspace files, and OpenClaw deploy scripts
 - `openwebui/` - Open WebUI nginx templates, deploy scripts, and Open WebUI docs
-- `infra_assets/` - remaining shared assets and compatibility wrappers for services such as Homarr and Uptime Kuma
+- `infra_assets/` - remaining shared assets and compatibility wrappers for services such as Homarr, Uptime Kuma, and Infisical
 
 ### Vikunja side
 
@@ -47,6 +47,7 @@ Important live paths:
 - `/opt/src/my_openclaw` - checkout of the infra repo for OpenClaw
 - `/opt/src/openclaw` - checkout of the OpenClaw app fork for source builds
 - `/opt/openclaw` - live OpenClaw Compose stack directory (also hosts Open WebUI)
+- `/opt/infisical` - Infisical persistent data directory for PostgreSQL and Redis
 - `/etc/nginx/sites-available/*.conf` - host nginx virtual-host configs for public endpoints
 - `/root/.openclaw` - live OpenClaw runtime config, sessions, workspace, and credentials
 
@@ -55,6 +56,9 @@ Containers on this VPS:
 - `openclaw-gateway` — the AI assistant (ports 18789/18790)
 - `openclaw-cli` — CLI companion (shares gateway network)
 - `open-webui` — multi-user LLM chat UI (container port 8080, bound to localhost on the host)
+- `infisical-backend` — secret management UI/API (container port 8080, bound to localhost on the host)
+- `infisical-db` — PostgreSQL for Infisical data
+- `infisical-redis` — Redis for Infisical cache and background jobs
 - `nginx` — host reverse proxy providing HTTPS for Open WebUI and OpenClaw domains
 
 ### Vikunja VPS (2 GB RAM)
@@ -95,6 +99,7 @@ Repo-managed means things like:
 - config templates
 - wrapper source code
 - OpenClaw infra assets
+- Infisical deployment assets
 
 Secrets and runtime-only state are the exception. They intentionally live outside Git, for example:
 
