@@ -57,7 +57,7 @@ fi
 INFISICAL_AGENT_ENV="${INFISICAL_AGENT_ENV:-/opt/config/infisical-agent.env}"
 if [ -f "$INFISICAL_AGENT_ENV" ] && [ -f /opt/config/infisical-env.sh ]; then
     source /opt/config/infisical-env.sh
-    infisical_fetch god-keys "$TARGET_ENV" prod || true
+    infisical_fetch contabo-karakeep "$TARGET_ENV" prod || true
 fi
 
 # -- Bring up Karakeep stack -----------------------------------------------

@@ -64,11 +64,13 @@ The deploy script:
 
 ## Secrets (Infisical)
 
-Karakeep secrets are in the `god-keys` Infisical project:
+Karakeep secrets are in the `contabo-karakeep` Infisical project (ID: `70c9a89e-52bc-4dee-9a95-3c74915e0a5f`):
 - KARAKEEP_VERSION, NEXTAUTH_SECRET, MEILI_MASTER_KEY, NEXTAUTH_URL
 - OPENAI_API_KEY (for AI tagging)
 - INFERENCE_TEXT_MODEL, INFERENCE_IMAGE_MODEL
 - INFERENCE_ENABLE_AUTO_TAGGING, INFERENCE_ENABLE_AUTO_SUMMARIZATION
+
+**Do NOT use god-keys.** god-keys is the master vault for local dev only. VPS agents must fetch from per-project vaults only.
 
 Wrapper secrets are in `/opt/config/karakeep_wrapper.env`:
 - KARAKEEP_API_URL, LLM_API_KEY, LLM_MODEL, LLM_BASE_URL
@@ -86,8 +88,10 @@ Karakeep core is AGPL-3.0. The wrapper is a **separate application** that commun
 
 ## Nginx
 
-- Domain: `karakeep.bytesizeprotip.com` → port 3458 (Karakeep)
-- Wrapper needs its own nginx config if exposed publicly (port 3459)
+- Domain: `karakeep.bytesizeprotip.com`
+  - `/` → port 3458 (Karakeep UI)
+  - `/wrapper/*` → port 3459 (wrapper API, prefix stripped)
+- Wrapper API accessible at `https://karakeep.bytesizeprotip.com/wrapper/api/chat`, etc.
 
 ## Notes
 
