@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:16
+    container_name: vikunja-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER:-vikunja} -d ${POSTGRES_DB:-vikunja}
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  vikunja:
+    image: vikunja/vikunja:latest
+    container_name: vikunja
+    restart: unless-stopped
+    environment:
+      VIKUNJA_DATABASE_HOST: ${VIKUNJA_DATABASE_HOST}
+      VIKUNJA_DATABASE_TYPE: ${VIKUNJA_DATABASE_TYPE}
+      VIKUNJA_DATABASE_USER: ${VIKUNJA_DATABASE_USER}
+      VIKUNJA_DATABASE_PASSWORD: ${VIKUNJA_DATABASE_PASSWORD}
+      VIKUNJA_DATABASE_DATABASE: ${VIKUNJA_DATABASE_DATABASE}
+      VIKUNJA_SERVICE_JWTSECRET: ${VIKUNJA_SERVICE_JWTSECRET}
+      VIKUNJA_SERVICE_FRONTENDURL: ${VIKUNJA_SERVICE_FRONTENDURL}
+      VIKUNJA_SERVICE_PUBLICURL: ${VIKUNJA_SERVICE_PUBLICURL}
+      XDG_CACHE_HOME: /app/vikunja/files/tmp/.cache
+      TMPDIR: /app/vikunja/files/tmp
+    volumes:
+      - vikunja-files:/app/vikunja/files
+    ports:
+      - "127.0.0.1:3456:3456"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  llm-chat:
+    build: /opt/src/vikunja_wrapper
+    container_name: llm-chat
+    restart: unless-stopped
+    env_file:
+      - /opt/config/vikunja_wrapper.env
+    volumes:
+      - llm-chat-data:/app/data
+    ports:
+      - "127.0.0.1:3457:3000"
+    depends_on:
+      - vikunja
+
+volumes:
+  db_data:
+  vikunja-files:
+  llm-chat-data:
