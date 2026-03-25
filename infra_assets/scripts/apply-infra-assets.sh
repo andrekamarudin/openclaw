@@ -18,9 +18,17 @@ SCRIPT_NAMES=(
     enable-uptime-kuma-nginx.sh
     deploy-vikunja.sh
     enable-vikunja-nginx.sh
+    infisical-env.sh
 )
 
 bash "$OC_REPO_DIR/openclaw-infra/scripts/apply-openclaw-infra.sh"
+
+# Fetch secrets from Infisical if agent is configured, otherwise fall back to .env
+INFISICAL_AGENT_ENV="${INFISICAL_AGENT_ENV:-/opt/config/infisical-agent.env}"
+if [ -f "$INFISICAL_AGENT_ENV" ]; then
+    source "$OC_REPO_DIR/infra_assets/scripts/infisical-env.sh"
+    infisical_fetch_multi "$OC_ROOT_DIR/.env" contabo-openclaw contabo-openwebui contabo-infra
+fi
 
 if [ -f "$OC_ROOT_DIR/.env" ]; then
     set -a

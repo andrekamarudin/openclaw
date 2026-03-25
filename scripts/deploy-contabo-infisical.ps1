@@ -41,12 +41,7 @@ $requiredKeys = @(
 	'CONTABO_MY_SERVER_PASSWORD',
 	'OPENCLAW_REMOTE_SSH_USER',
 	'OPENCLAW_REMOTE_ROOT_DIR',
-	'OPENCLAW_REMOTE_REPO_DIR',
-	'INFISICAL_DOMAIN',
-	'INFISICAL_SITE_URL',
-	'INFISICAL_ENCRYPTION_KEY',
-	'INFISICAL_AUTH_SECRET',
-	'INFISICAL_DB_CONNECTION_URI'
+	'OPENCLAW_REMOTE_REPO_DIR'
 )
 
 foreach ($key in $requiredKeys) {
@@ -62,7 +57,6 @@ $remoteRepoDir = $envMap['OPENCLAW_REMOTE_REPO_DIR']
 $remoteInfisicalDir = '/opt/infisical'
 
 $archivePath = Join-Path $env:TEMP 'my_openclaw-infisical.tar'
-$normalizedEnvPath = Join-Path $env:TEMP 'my_openclaw.env'
 
 if (Test-Path $archivePath) {
 	Remove-Item $archivePath -Force
@@ -75,12 +69,6 @@ try {
 finally {
 	Pop-Location
 }
-
-[System.IO.File]::WriteAllText(
-	$normalizedEnvPath,
-	([System.IO.File]::ReadAllText($envPath) -replace "`r`n", "`n"),
-	(New-Object System.Text.UTF8Encoding $false)
-)
 
 $securePassword = ConvertTo-SecureString $envMap['CONTABO_MY_SERVER_PASSWORD'] -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($userName, $securePassword)
@@ -98,9 +86,6 @@ try {
 	if ($bootstrapResult.ExitStatus -ne 0) {
 		throw ($bootstrapResult.Output -join [Environment]::NewLine)
 	}
-
-	Write-Host 'Uploading local .env to remote /opt/openclaw/.env ...'
-	Set-SCPItem -ComputerName $hostName -Credential $credential -Path $normalizedEnvPath -Destination "$remoteRootDir/" -NewName '.env' -AcceptKey -Force
 
 	Write-Host 'Uploading working tree snapshot ...'
 	Set-SCPItem -ComputerName $hostName -Credential $credential -Path $archivePath -Destination '/tmp/' -NewName 'my_openclaw-infisical.tar' -AcceptKey -Force
@@ -142,9 +127,6 @@ bash -lc 'set -a; . "{0}/.env"; set +a; PORT=${{INFISICAL_BIND_PORT:-8081}}; for
 finally {
 	if (Test-Path $archivePath) {
 		Remove-Item $archivePath -Force
-	}
-	if (Test-Path $normalizedEnvPath) {
-		Remove-Item $normalizedEnvPath -Force
 	}
 	if ($session) {
 		Remove-SSHSession -SSHSession $session | Out-Null

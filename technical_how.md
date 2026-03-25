@@ -19,8 +19,7 @@ In short: GitHub defines desired state, SSH applies desired state.
 
 ### OpenClaw side
 
-- `my_openclaw` is the source of truth for OpenClaw infra assets, deploy scripts, docs, and local secret-management workflow.
-- Local `.env` in `my_openclaw` is the source of truth for OpenClaw secrets and Contabo SSH access details.
+- `my_openclaw` is the source of truth for OpenClaw infra assets, deploy scripts, docs, and Infisical automation.
 - `openclaw` is the app source repo used only when you need a source-build deployment instead of consuming the published image.
 
 Inside `my_openclaw`, the canonical layout is now:
@@ -101,13 +100,12 @@ Repo-managed means things like:
 - OpenClaw infra assets
 - Infisical deployment assets
 
-Secrets and runtime-only state are the exception. They intentionally live outside Git, for example:
+Secrets and runtime-only state are the exception. They intentionally live outside Git:
 
-- `my_openclaw/.env` locally
-- `/opt/openclaw/.env` on the VPS
-- `/opt/config/vikunja_wrapper.env` on the VPS
-- `/root/.openclaw/credentials/`
-- persisted sessions and runtime-generated files
+- **Infisical** (self-hosted at `knives.bytesizeprotip.com`) is the single source of truth for all VPS secrets across all hosts.
+- Each VPS has a machine identity (stored at `/opt/config/infisical-agent.env`) that authenticates to Infisical.
+- Deploy scripts call `infisical_fetch` (from `/opt/config/infisical-env.sh`) to pull secrets at deploy time.
+- Runtime-generated files like `/root/.openclaw/credentials/` and persisted sessions remain on-server.
 
 ## How SSH Is Supposed To Be Used
 
@@ -119,7 +117,7 @@ Normal SSH uses:
 - pull latest commits on the VPS
 - inspect container status
 - inspect logs
-- copy the local secret `.env` to the VPS when needed
+- verify that Infisical-fetched secrets are correct on the VPS
 - run health checks
 - restart services after a config or image change
 
@@ -264,7 +262,7 @@ When deciding where a change belongs, ask these questions in order:
 2. Is this OpenClaw app source code for a custom source build? Use `openclaw`.
 3. Is this wrapper app behavior, wrapper infra, or proxy wiring? Use `vikunja_wrapper`.
 4. Is this core Vikunja source behavior? Use `vikunja`.
-5. Is this only a live secret or runtime state value? Change the server-side secret or runtime location, not Git.
+5. Is this only a live secret or runtime state value? Update the secret in Infisical (at `knives.bytesizeprotip.com`), then redeploy so the VPS picks it up.
 
 Then apply the deployment rule:
 
@@ -272,6 +270,50 @@ Then apply the deployment rule:
 - push to GitHub
 - SSH to pull and deploy
 - avoid server-only edits
+
+## Secret Management With Infisical
+
+All VPS secrets are stored in a self-hosted Infisical instance at `https://knives.bytesizeprotip.com`, running on the Contabo VPS.
+
+### Infisical Projects
+
+Secrets are organized into 8 projects, one per service:
+
+- `racknerd-vikunja` — Vikunja stack secrets (DB, mailer, OAuth, etc.)
+- `racknerd-postiz` — Postiz social scheduler secrets
+- `racknerd-modal` — Modal LLM proxy secrets
+- `contabo-openclaw` — OpenClaw gateway and CLI secrets
+- `contabo-openwebui` — Open WebUI secrets
+- `contabo-infra` — Contabo shared infra (Infisical, nginx, etc.)
+- `greencloud-nextcloud` — Nextcloud secrets
+- `hostinger-n8n` — n8n automation secrets
+
+### Machine Identities
+
+Each VPS has a dedicated machine identity with Universal Auth:
+
+- `racknerd-agent` — can read racknerd-* projects
+- `contabo-agent` — can read contabo-* projects
+- `greencloud-agent` — can read greencloud-* projects
+- `hostinger-agent` — can read hostinger-* projects
+- `deploy-agent` — can read all projects (for cross-VPS deploy scripts)
+
+Credentials are stored on each VPS at `/opt/config/infisical-agent.env` (containing `INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET`, and `INFISICAL_URL`).
+
+### How Secrets Flow
+
+1. Secrets are created or updated in the Infisical web UI or via `scripts/setup_infisical.py`.
+2. Deploy scripts on each VPS call `infisical_fetch <project> <output.env>` to pull secrets at deploy time.
+3. The helper script `/opt/config/infisical-env.sh` handles authentication, API calls, and writing `.env` files.
+4. Docker Compose stacks consume the generated `.env` files as before.
+
+To update a secret: change it in Infisical, then redeploy the affected service.
+
+### Key Files
+
+- `scripts/setup_infisical.py` — master script to create projects, populate secrets, and configure identities
+- `scripts/bootstrap_infisical_agents.py` — SSH-based script to install agent credentials on all VPSes
+- `infra_assets/scripts/infisical-env.sh` — shared bash helper deployed to all VPSes
 
 ## Short Version
 
@@ -282,7 +324,7 @@ It is:
 1. local repo change
 2. GitHub push
 3. VPS pull via SSH
-4. scripted deploy
+4. scripted deploy (secrets fetched from Infisical automatically)
 5. health check
 
 That is the mechanism that keeps Vikunja and OpenClaw reproducible, conflict-free, and understandable later.

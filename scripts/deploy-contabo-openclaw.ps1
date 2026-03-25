@@ -41,9 +41,7 @@ $requiredKeys = @(
 	'CONTABO_MY_SERVER_PASSWORD',
 	'OPENCLAW_REMOTE_SSH_USER',
 	'OPENCLAW_REMOTE_ROOT_DIR',
-	'OPENCLAW_REMOTE_REPO_DIR',
-	'OPENCLAW_GATEWAY_TOKEN',
-	'TELEGRAM_BOT_TOKEN'
+	'OPENCLAW_REMOTE_REPO_DIR'
 )
 
 foreach ($key in $requiredKeys) {
@@ -65,13 +63,7 @@ if ($localHead -ne $originHead) {
 }
 
 $archivePath = Join-Path $env:TEMP ("my_openclaw-{0}.tar" -f $localHead)
-$normalizedEnvPath = Join-Path $env:TEMP 'my_openclaw.env'
 git -C $repoRoot archive --format=tar --output=$archivePath HEAD
-[System.IO.File]::WriteAllText(
-	$normalizedEnvPath,
-	([System.IO.File]::ReadAllText($envPath) -replace "`r`n", "`n"),
-	(New-Object System.Text.UTF8Encoding $false)
-)
 
 $securePassword = ConvertTo-SecureString $envMap['CONTABO_MY_SERVER_PASSWORD'] -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($userName, $securePassword)
@@ -90,9 +82,6 @@ try {
 		throw ($bootstrapResult.Output -join [Environment]::NewLine)
 	}
 
-	Write-Host 'Uploading local .env to remote /opt/openclaw/.env ...'
-	Set-SCPItem -ComputerName $hostName -Credential $credential -Path $normalizedEnvPath -Destination "$remoteRootDir/" -NewName '.env' -AcceptKey -Force
-
 	Write-Host 'Uploading repo snapshot for the pushed origin/master commit ...'
 	Set-SCPItem -ComputerName $hostName -Credential $credential -Path $archivePath -Destination '/tmp/' -NewName 'my_openclaw.tar' -AcceptKey -Force
 
@@ -103,7 +92,7 @@ try {
 		throw ($extractResult.Output -join [Environment]::NewLine)
 	}
 
-	Write-Host 'Running deploy from pushed repo snapshot + local .env ...'
+	Write-Host 'Running deploy from pushed repo snapshot (secrets fetched from Infisical) ...'
 	$deployCommand = "bash '$remoteRepoDir/openclaw-infra/scripts/apply-openclaw-infra.sh'; cd '$remoteRootDir'; docker rm -f caddy >/dev/null 2>&1 || true; docker compose pull openclaw-gateway open-webui; docker compose up -d --no-deps openclaw-gateway; docker compose up -d open-webui; bash '$remoteRepoDir/openwebui/scripts/enable-openwebui-nginx.sh'; chown -R 1000:1000 /root/.openclaw"
 	$deployResult = Get-SshResult (Invoke-SSHCommand -SSHSession $session -Command $deployCommand -TimeOut 300000)
 	if ($deployResult.ExitStatus -ne 0) {
@@ -133,14 +122,11 @@ bash -lc 'set -a; . "{0}/.env"; set +a; PORT=${{OPENWEBUI_BIND_PORT:-3000}}; for
 
 	Write-Host ''
 	Write-Host 'Deployment complete.'
-	Write-Host "OpenClaw is now running on $hostName with local .env and GitHub repo as the sources of truth."
+	Write-Host "OpenClaw is now running on $hostName with Infisical and GitHub repo as the sources of truth."
 }
 finally {
 	if (Test-Path $archivePath) {
 		Remove-Item $archivePath -Force
-	}
-	if (Test-Path $normalizedEnvPath) {
-		Remove-Item $normalizedEnvPath -Force
 	}
 	if ($session) {
 		Remove-SSHSession -SSHSession $session | Out-Null
