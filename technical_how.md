@@ -32,7 +32,7 @@ Inside `my_openclaw`, the canonical layout is now:
 ### Vikunja side
 
 - `vikunja_wrapper` is the source of truth for the wrapper app, wrapper-specific infra assets, deploy scripts, and reverse-proxy wiring.
-- `vikunja` is the upstream core source checkout. On the VPS, production normally runs the official Vikunja image even though a source checkout also exists.
+- `vikunja` is the core source checkout used for source-build deployments when production needs custom core changes beyond the official image.
 
 ## VPS Layout
 
@@ -202,14 +202,15 @@ Important wrapper rule:
 
 ### Core Vikunja
 
-The VPS also has a source checkout at `/opt/src/vikunja`, but production usually runs the official image rather than a custom source build.
+The VPS source checkout at `/opt/src/vikunja` is the build input whenever production needs custom core behavior.
 
 Expected workflow:
 
 1. Decide whether the change is a source-code change or just an image refresh.
 2. For code work, make changes locally in a dedicated worktree for the `vikunja` repo and push to GitHub.
-3. For production updates, use the repo-managed VPS helper such as `/opt/src/vikunja_wrapper/infra_assets/scripts/update-vikunja.sh`.
-4. Let the server pull or refresh from the declared source rather than hand-editing the live stack.
+3. If production is meant to run custom core changes, ensure `/opt/src/vikunja` on the VPS matches the intended source tree before deploy.
+4. For production updates, use the repo-managed deploy helper from `my_openclaw` so the live compose config builds Vikunja from `/opt/src/vikunja`.
+5. Let the server pull or refresh from the declared source rather than hand-editing the live stack.
 
 ## Conflict-Free Deployment Pattern
 

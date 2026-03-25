@@ -24,7 +24,14 @@ for f in "$SOURCE_COMPOSE" "$SOURCE_ENV_EXAMPLE"; do
 done
 
 # -- Ensure directories exist ------------------------------------------------
-mkdir -p "$VIKUNJA_DIR" "$CONFIG_DIR"
+mkdir -p "$VIKUNJA_DIR" "$CONFIG_DIR" /opt/src
+
+# -- Validate source build input ----------------------------------------------
+if [ ! -d /opt/src/vikunja ]; then
+    echo "Missing Vikunja source checkout: /opt/src/vikunja" >&2
+    echo "Sync the custom core source to the VPS before deploying." >&2
+    exit 1
+fi
 
 # -- Copy compose -------------------------------------------------------------
 cp "$SOURCE_COMPOSE" "$TARGET_COMPOSE"

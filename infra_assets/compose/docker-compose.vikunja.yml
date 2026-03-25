@@ -16,7 +16,7 @@ services:
       retries: 3
 
   vikunja:
-    image: vikunja/vikunja:latest
+    build: /opt/src/vikunja
     container_name: vikunja
     restart: unless-stopped
     environment:
