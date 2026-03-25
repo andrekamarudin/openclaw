@@ -65,7 +65,7 @@ fi
 # -- Bring up Karakeep stack -----------------------------------------------
 cd "$KARAKEEP_DIR"
 
-docker compose pull
+docker compose pull --ignore-buildable
 docker compose up -d --build
 
 echo "Karakeep deploy complete — access at https://karakeep.bytesizeprotip.com"

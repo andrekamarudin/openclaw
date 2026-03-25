@@ -1,6 +1,9 @@
 services:
   karakeep-web:
-    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
+    build:
+      context: /opt/src/my_openclaw/infra_assets/karakeep
+      args:
+        KARAKEEP_VERSION: ${KARAKEEP_VERSION:-release}
     container_name: karakeep-web
     restart: unless-stopped
     volumes:
