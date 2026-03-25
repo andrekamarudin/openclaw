@@ -14,6 +14,8 @@ SCRIPT_NAMES=(
     enable-homarr-nginx.sh
     deploy-uptime-kuma.sh
     enable-uptime-kuma-nginx.sh
+    deploy-postiz.sh
+    enable-postiz-nginx.sh
 )
 
 bash "$OC_REPO_DIR/openclaw-infra/scripts/apply-openclaw-infra.sh"
@@ -76,6 +78,33 @@ if [ -n "$UPTIME_KUMA_DOMAIN" ] && [ -f "$UPTIME_KUMA_NGINX_HTTP_SRC" ]; then
         nginx -t
         systemctl reload nginx
         echo "Deployed nginx site for $UPTIME_KUMA_DOMAIN"
+    fi
+fi
+
+# --- Nginx site for Postiz ---
+POSTIZ_DOMAIN="${POSTIZ_DOMAIN:-}"
+POSTIZ_NGINX_HTTP_SRC="$OC_REPO_DIR/infra_assets/nginx/postiz-http.conf"
+POSTIZ_NGINX_HTTPS_SRC="$OC_REPO_DIR/infra_assets/nginx/postiz-https.conf"
+
+if [ -n "$POSTIZ_DOMAIN" ] && [ -f "$POSTIZ_NGINX_HTTP_SRC" ]; then
+    NGINX_SITE_AVAILABLE="/etc/nginx/sites-available/$POSTIZ_DOMAIN.conf"
+    NGINX_SITE_ENABLED="/etc/nginx/sites-enabled/$POSTIZ_DOMAIN.conf"
+    CERT_DIR="/etc/letsencrypt/live/$POSTIZ_DOMAIN"
+
+    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ] && [ -f "$POSTIZ_NGINX_HTTPS_SRC" ]; then
+        envsubst '${POSTIZ_DOMAIN}' < "$POSTIZ_NGINX_HTTPS_SRC" > "$NGINX_SITE_AVAILABLE"
+    else
+        envsubst '${POSTIZ_DOMAIN}' < "$POSTIZ_NGINX_HTTP_SRC" > "$NGINX_SITE_AVAILABLE"
+    fi
+
+    ln -sfn "$NGINX_SITE_AVAILABLE" "$NGINX_SITE_ENABLED"
+
+    if command -v nginx >/dev/null 2>&1; then
+        nginx -t
+        systemctl reload nginx
+        echo "Deployed nginx site for $POSTIZ_DOMAIN"
     fi
 fi
 
