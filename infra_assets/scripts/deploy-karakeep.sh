@@ -58,6 +58,8 @@ INFISICAL_AGENT_ENV="${INFISICAL_AGENT_ENV:-/opt/config/infisical-agent.env}"
 if [ -f "$INFISICAL_AGENT_ENV" ] && [ -f /opt/config/infisical-env.sh ]; then
     source /opt/config/infisical-env.sh
     infisical_fetch contabo-karakeep "$TARGET_ENV" prod || true
+    # Merge wrapper-specific secrets into wrapper env
+    infisical_fetch contabo-karakeep "$TARGET_WRAPPER_ENV" prod || true
 fi
 
 # -- Bring up Karakeep stack -----------------------------------------------
