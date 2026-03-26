@@ -35,9 +35,20 @@ Use this skill when the task is about `vikunja` or `vikunja_wrapper` development
 
 ## Deploys
 
-- Wrapper deploy: `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh wrapper`
-- Fast deploy: `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh fast`
-- Core rebuild deploy: `/home/node/.openclaw/workspace/bin/deploy-racknerd.sh core-build`
+Vikunja and the wrapper (`llm-chat`) now run on **Contabo** (this box), not RackNerd.
+
+Restart containers via the Docker socket API (docker CLI not in PATH inside OpenClaw):
+```bash
+# Restart wrapper (llm-chat)
+curl --unix-socket /var/run/docker.sock -X POST "http://localhost/containers/llm-chat/restart"
+# Restart Vikunja core
+curl --unix-socket /var/run/docker.sock -X POST "http://localhost/containers/vikunja/restart"
+```
+
+For a full redeploy (pull latest image, recreate), trigger from the Contabo host:
+```bash
+bash /opt/src/my_openclaw/infra_assets/scripts/deploy-vikunja.sh
+```
 
 ## ClawHub
 

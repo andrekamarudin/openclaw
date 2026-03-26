@@ -19,8 +19,8 @@ Andre runs self-hosted services across four VPS providers. This skill gives you 
 | RAM | 12 GB |
 | Reverse proxy | nginx + certbot (host-level, not containerized) |
 | Compose dir | `/opt/openclaw/` |
-| Repo checkout | `/hostfs/opt/src/my_openclaw` |
-| .env (secrets) | `/opt/openclaw/.env` (from inside container: `/hostfs/opt/openclaw/.env`) |
+| Repo checkout | `/opt/src/my_openclaw` (synced via scp, not git) |
+| .env (secrets) | `/opt/openclaw/.env` |
 | GitHub repo | `andrekamarudin/my_openclaw` (private, `master` branch) |
 
 **Services on Contabo:**
@@ -28,18 +28,26 @@ Andre runs self-hosted services across four VPS providers. This skill gives you 
 | Service | Container | Internal Port | URL |
 |---------|-----------|---------------|-----|
 | OpenClaw Gateway | `openclaw-gateway` | :18789, :18790 | `https://openclaw.bytesizeprotip.com` |
-| OpenClaw CLI | `openclaw-cli` | (shares gateway network) | — |
-| Open WebUI | `open-webui` | 127.0.0.1:3000 → 8080 | `https://openwebui.bytesizeprotip.com` |
+| Open WebUI | `open-webui` | 127.0.0.1:3000 | `https://chat.bytesizeprotip.com` |
+| Vikunja | `vikunja` | 127.0.0.1:3456 | `https://tasks.bytesizeprotip.com` |
+| Vikunja Wrapper | `llm-chat` | 127.0.0.1:3000 | `https://tasks.bytesizeprotip.com/llm` |
+| Karakeep | `karakeep-web` | 127.0.0.1:3000 | `https://karakeep.bytesizeprotip.com` |
+| Infisical | `infisical-backend` | 127.0.0.1:8080 | `https://knives.bytesizeprotip.com` |
 | Homarr | `homarr` | 127.0.0.1:7575 | `https://home.bytesizeprotip.com` |
 | Uptime Kuma | `uptime-kuma` | 127.0.0.1:3001 | `https://status.bytesizeprotip.com` |
 
-**Inspect commands (run locally, no SSH needed):**
+**Inspect commands from inside OpenClaw container:**
+
+Note: `/hostfs` may not be accessible in exec context. Use the Docker socket API instead.
+
 ```bash
-docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-docker logs <container> --tail 50
-cat /hostfs/opt/openclaw/docker-compose.yml
-cat /hostfs/etc/nginx/sites-enabled/
-systemctl status nginx        # via hostfs: nsenter or docker exec on host
+# List running containers
+curl -s --unix-socket /var/run/docker.sock "http://localhost/containers/json" | jq '[.[] | {Name: .Names[0], Status: .Status}]'
+
+# Get container logs
+curl -s --unix-socket /var/run/docker.sock "http://localhost/containers/<name>/logs?tail=50&stdout=1&stderr=1"
+
+# Health checks
 curl -sf http://127.0.0.1:18789/healthz
 curl -sf http://127.0.0.1:3000/health
 curl -sf http://127.0.0.1:7575
@@ -48,7 +56,7 @@ curl -sf http://127.0.0.1:3001
 
 ---
 
-### 2. RackNerd VPS (Vikunja — task management)
+### 2. RackNerd VPS (Postiz — social scheduling)
 
 | Item | Value |
 |------|-------|
@@ -58,23 +66,25 @@ curl -sf http://127.0.0.1:3001
 | OS | Ubuntu 22.04 LTS |
 | RAM | 2 GB |
 | Reverse proxy | Caddy (containerized, auto HTTPS) |
-| Compose dir | `/opt/vikunja/` |
-| Repo checkouts | `/opt/src/vikunja` (core), `/opt/src/vikunja_wrapper` (wrapper) |
-| GitHub repos | `go-vikunja/vikunja` (public, `main`), `andrekamarudin/vikunja_wrapper` (private, `master`) |
+| Compose dir | `/opt/postiz/` |
+| Repo checkout | `/opt/src/vikunja_wrapper` |
+| GitHub repo | `andrekamarudin/vikunja_wrapper` (private, `master`) |
 
 **Services on RackNerd:**
 
 | Service | Container | Internal Port | URL |
 |---------|-----------|---------------|-----|
-| Vikunja (core) | `vikunja` | :3456 | `https://tasks.bytesizeprotip.com` |
-| Vikunja Wrapper | `llm-chat` | :3000 | `https://tasks.bytesizeprotip.com/llm` |
 | Postiz | `postiz` | :5000 | `https://postiz.bytesizeprotip.com` |
-| Caddy | `caddy` | :80, :443 | (reverse proxy) |
+| Caddy | `postiz_proxy-caddy-1` | :80, :443 | (reverse proxy) |
+| Temporal | `temporal` | :7233 | (workflow engine, internal) |
+| Temporal DB | `temporal-db` | (Postgres 16) | — |
+| Temporal ES | `temporal-elasticsearch` | (ES 7.17) | — |
+| Postiz DB | `postiz-db` | (Postgres 17) | — |
+| Postiz Redis | `postiz-redis` | (Redis 7.2) | — |
 
 **SSH helper (preferred):**
 ```bash
 /home/node/.openclaw/workspace/bin/setup-racknerd-ssh.sh
-# Returns the key path; then:
 KEY=$(/home/node/.openclaw/workspace/bin/setup-racknerd-ssh.sh)
 KNOWN=/home/node/.openclaw/workspace/dev/.ssh/known_hosts
 ssh -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
@@ -87,19 +97,8 @@ ssh -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
 **Common inspect commands (via SSH):**
 ```bash
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-docker logs vikunja --tail 50
-docker logs vikunja-wrapper --tail 50
-cat /opt/vikunja/docker-compose.yml
-cat /opt/vikunja/.env
-curl -sf http://127.0.0.1:3456/api/v1/info
-curl -sf http://127.0.0.1:8080/health
-```
-
-**Deploy commands (from this box):**
-```bash
-/home/node/.openclaw/workspace/bin/deploy-racknerd.sh wrapper    # redeploy wrapper
-/home/node/.openclaw/workspace/bin/deploy-racknerd.sh fast        # fast deploy (no rebuild)
-/home/node/.openclaw/workspace/bin/deploy-racknerd.sh core-build  # rebuild vikunja core
+docker logs postiz --tail 50
+cat /opt/postiz/docker-compose.yml
 ```
 
 ---
@@ -133,29 +132,14 @@ curl -sf http://127.0.0.1:8080/health
 | Immich Redis | `immich-redis` | (Redis 7) | — |
 | Caddy | `caddy` | :80, :443 | (reverse proxy) |
 
-**Common inspect commands (via SSH):**
-```bash
-docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-docker logs nextcloud --tail 50
-docker logs immich-server --tail 50
-docker exec nextcloud php occ status
-cat /opt/nextcloud/docker-compose.yml
-df -h /mnt/storage
-ufw status verbose
-fail2ban-client status sshd
-fail2ban-client status nextcloud
-```
-
 ---
 
----
-
-### 4. Hostinger VPS (n8n automation)
+### 4. Hostinger VPS / my_n8n (n8n automation)
 
 | Item | Value |
 |------|-------|
-| IP | `31.97.71.85` |
-| SSH | `ssh hostinger` (uses `~/.ssh/config` alias) |
+| IP | `31.97.71.85` (env var `N8N_SSH_HOST`) |
+| SSH | Uses `N8N_SSH_HOST`, `N8N_SSH_PORT`, `N8N_SSH_USER`; setup via `setup-n8n-ssh.sh` |
 | Hostname | `srv935644.hstgr.cloud` |
 
 **Services on Hostinger:**
@@ -163,6 +147,18 @@ fail2ban-client status nextcloud
 | Service | URL |
 |---------|-----|
 | n8n | `https://n8n.srv935644.hstgr.cloud` |
+| Traefik | (reverse proxy, internal) |
+
+**SSH helper:**
+```bash
+KEY=$(/home/node/.openclaw/workspace/bin/setup-n8n-ssh.sh)
+KNOWN=/home/node/.openclaw/workspace/dev/.ssh/known_hosts
+ssh -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+    -o UserKnownHostsFile="$KNOWN" \
+    -p "${N8N_SSH_PORT:-22}" \
+    "${N8N_SSH_USER:-root}@${N8N_SSH_HOST}" \
+    "docker ps"
+```
 
 **Managed via:** Hostinger API + direct SSH. Local management repo: `hostinger/` (GitHub: `hk_hostinger`).
 
@@ -173,10 +169,12 @@ fail2ban-client status nextcloud
 | Subdomain | A Record | VPS |
 |-----------|----------|-----|
 | `openclaw.bytesizeprotip.com` | `46.250.234.28` | Contabo |
-| `openwebui.bytesizeprotip.com` | `46.250.234.28` | Contabo |
+| `chat.bytesizeprotip.com` | `46.250.234.28` | Contabo |
+| `tasks.bytesizeprotip.com` | `46.250.234.28` | Contabo |
+| `karakeep.bytesizeprotip.com` | `46.250.234.28` | Contabo |
+| `knives.bytesizeprotip.com` | `46.250.234.28` | Contabo |
 | `home.bytesizeprotip.com` | `46.250.234.28` | Contabo |
 | `status.bytesizeprotip.com` | `46.250.234.28` | Contabo |
-| `tasks.bytesizeprotip.com` | `23.226.133.245` | RackNerd |
 | `postiz.bytesizeprotip.com` | `23.226.133.245` | RackNerd |
 | `nextcloud.bytesizeprotip.com` | `167.253.159.196` | GreenCloud |
 | `immich.bytesizeprotip.com` | `167.253.159.196` | GreenCloud |
@@ -186,7 +184,7 @@ fail2ban-client status nextcloud
 | Repo | Owner | Branch | Manages |
 |------|-------|--------|---------|
 | `my_openclaw` | `andrekamarudin` (private) | `master` | Contabo VPS infra, OpenClaw config, workspace |
-| `vikunja_wrapper` | `andrekamarudin` (private) | `master` | Vikunja wrapper API, RackNerd deploy scripts |
+| `vikunja_wrapper` | `andrekamarudin` (private) | `master` | Vikunja wrapper API, RackNerd Postiz infra |
 | `vikunja` | `go-vikunja` (public) | `main` | Vikunja core (upstream fork) |
 | `greencloud_vps` | `andrekamarudin` (private) | `master` | GreenCloud VPS infra, Nextcloud + Immich deploy (local folder: `greencloud/`) |
 | `hk_hostinger` | `andrekamarudin` (private) | `master` | Hostinger VPS management, n8n (local folder: `hostinger/`) |
