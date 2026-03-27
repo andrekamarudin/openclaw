@@ -17,6 +17,10 @@ jobs:
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            if [ ! -d /opt/src/openclaw/.git ]; then
+              git clone https://github.com/andrekamarudin/openclaw-infra.git /opt/src/openclaw
+            fi
             cd /opt/src/openclaw
+            git checkout -- .
             git pull --ff-only origin master
             bash openclaw-infra/scripts/deploy-openclaw.sh

@@ -8,6 +8,7 @@ OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
 OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 
 cd "$OC_REPO_DIR"
+git checkout -- .
 git pull --ff-only origin master
 
 bash "$OC_REPO_DIR/openclaw-infra/scripts/apply-openclaw-infra.sh"
