@@ -13,7 +13,7 @@ This directory is no longer the canonical home for OpenClaw or Open WebUI assets
 ## Canonical Locations Now
 
 - OpenClaw infra: `../openclaw-infra/`
-- Open WebUI assets: `../openwebui/`
+- Open WebUI: moved to standalone `openwebui/` repo in the parent workspace
 
 ## Shared/Legacy Scripts
 

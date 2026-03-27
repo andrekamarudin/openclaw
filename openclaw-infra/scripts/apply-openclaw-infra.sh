@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync repo-managed OpenClaw and Open WebUI assets to /opt/openclaw and /root/.openclaw on the VPS.
+# Sync repo-managed OpenClaw assets to /opt/openclaw and /root/.openclaw on the VPS.
 # Run this from the VPS after pulling the latest openclaw repo.
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
 OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 OC_CONFIG_DIR="${OC_CONFIG_DIR:-/root/.openclaw}"
 OPENCLAW_INFRA_DIR="$OC_REPO_DIR/openclaw-infra"
-OPENWEBUI_DIR="$OC_REPO_DIR/openwebui"
 OPENCLAW_SCRIPT_DIR="$OPENCLAW_INFRA_DIR/scripts"
-OPENWEBUI_SCRIPT_DIR="$OPENWEBUI_DIR/scripts"
 
 SOURCE_COMPOSE_FILE="$OPENCLAW_INFRA_DIR/compose/docker-compose.yml"
 TARGET_COMPOSE_FILE="$OC_ROOT_DIR/docker-compose.yml"
@@ -24,12 +22,6 @@ OPENCLAW_SCRIPT_NAMES=(
     deploy-build-openclaw.sh
     update-openclaw.sh
     self-update.sh
-)
-
-OPENWEBUI_SCRIPT_NAMES=(
-    deploy-openwebui.sh
-    enable-openwebui-nginx.sh
-    update-openwebui.sh
 )
 
 if [ ! -f "$SOURCE_COMPOSE_FILE" ]; then
@@ -92,34 +84,6 @@ if [ -d "$WORKSPACE_SRC/skills" ]; then
     cp -R "$WORKSPACE_SRC/skills/." "$WORKSPACE_DIR/skills/"
 fi
 
-# --- Nginx site for Open WebUI ---
-OPENWEBUI_DOMAIN="${OPENWEBUI_DOMAIN:-}"
-OPENWEBUI_BIND_PORT="${OPENWEBUI_BIND_PORT:-3000}"
-OPENWEBUI_NGINX_HTTP_SRC="$OPENWEBUI_DIR/nginx/openwebui-http.conf"
-OPENWEBUI_NGINX_HTTPS_SRC="$OPENWEBUI_DIR/nginx/openwebui-https.conf"
-
-if [ -n "$OPENWEBUI_DOMAIN" ] && [ -f "$OPENWEBUI_NGINX_HTTP_SRC" ]; then
-    NGINX_SITE_AVAILABLE="/etc/nginx/sites-available/$OPENWEBUI_DOMAIN.conf"
-    NGINX_SITE_ENABLED="/etc/nginx/sites-enabled/$OPENWEBUI_DOMAIN.conf"
-    CERT_DIR="/etc/letsencrypt/live/$OPENWEBUI_DOMAIN"
-
-    mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-
-    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ] && [ -f "$OPENWEBUI_NGINX_HTTPS_SRC" ]; then
-        envsubst '${OPENWEBUI_DOMAIN} ${OPENWEBUI_BIND_PORT}' < "$OPENWEBUI_NGINX_HTTPS_SRC" > "$NGINX_SITE_AVAILABLE"
-    else
-        envsubst '${OPENWEBUI_DOMAIN} ${OPENWEBUI_BIND_PORT}' < "$OPENWEBUI_NGINX_HTTP_SRC" > "$NGINX_SITE_AVAILABLE"
-    fi
-
-    ln -sfn "$NGINX_SITE_AVAILABLE" "$NGINX_SITE_ENABLED"
-
-    if command -v nginx >/dev/null 2>&1; then
-        nginx -t
-        systemctl reload nginx
-        echo "Deployed nginx site for $OPENWEBUI_DOMAIN"
-    fi
-fi
-
 # --- Fix permissions ---
 chown -R 1000:1000 "$OC_CONFIG_DIR"
 
@@ -132,13 +96,5 @@ for script_name in "${OPENCLAW_SCRIPT_NAMES[@]}"; do
     fi
 done
 
-for script_name in "${OPENWEBUI_SCRIPT_NAMES[@]}"; do
-    chmod +x "$OPENWEBUI_SCRIPT_DIR/$script_name" 2>/dev/null || true
-    stale="$OC_ROOT_DIR/$script_name"
-    if [ -f "$stale" ]; then
-        rm -f "$stale"
-    fi
-done
-
-echo "Applied OpenClaw and Open WebUI repo assets from $OC_REPO_DIR to $OC_ROOT_DIR"
-echo "Repo-managed scripts should be run from $OPENCLAW_SCRIPT_DIR and $OPENWEBUI_SCRIPT_DIR"
+echo "Applied OpenClaw repo assets from $OC_REPO_DIR to $OC_ROOT_DIR"
+echo "Repo-managed scripts should be run from $OPENCLAW_SCRIPT_DIR"
