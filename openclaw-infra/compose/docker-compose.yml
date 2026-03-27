@@ -28,9 +28,13 @@ services:
       - /opt/openclaw/self-update.sh:/usr/local/bin/self-update.sh:ro
     group_add:
       - "${DOCKER_GID:-988}"
+    expose:
+      - "18789"
     ports:
-      - "${OPENCLAW_GATEWAY_PORT:-18789}:18789"
-      - "${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+      - "127.0.0.1:${OPENCLAW_BRIDGE_PORT:-18790}:18790"
+    networks:
+      - default
+      - caddy-net
     init: true
     restart: unless-stopped
     mem_limit: 1536m
@@ -89,3 +93,7 @@ services:
     entrypoint: ["node", "dist/index.js"]
     depends_on:
       - openclaw-gateway
+
+networks:
+  caddy-net:
+    external: true
