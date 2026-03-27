@@ -40,10 +40,10 @@ Canonical OpenClaw deployment assets for the Contabo stack.
 ## Canonical VPS Commands
 
 ```bash
-/opt/src/my_openclaw/openclaw-infra/scripts/apply-openclaw-infra.sh
-/opt/src/my_openclaw/openclaw-infra/scripts/deploy-openclaw.sh
-/opt/src/my_openclaw/openclaw-infra/scripts/deploy-build-openclaw.sh
-/opt/src/my_openclaw/openclaw-infra/scripts/update-openclaw.sh
+/opt/src/openclaw/openclaw-infra/scripts/apply-openclaw-infra.sh
+/opt/src/openclaw/openclaw-infra/scripts/deploy-openclaw.sh
+/opt/src/openclaw/openclaw-infra/scripts/deploy-build-openclaw.sh
+/opt/src/openclaw/openclaw-infra/scripts/update-openclaw.sh
 ```
 
 ## Notes
@@ -55,7 +55,7 @@ Canonical OpenClaw deployment assets for the Contabo stack.
 ## First-Time Setup
 
 ```bash
-git clone https://github.com/andrekamarudin/my_openclaw.git /opt/src/my_openclaw
 git clone https://github.com/andrekamarudin/openclaw.git /opt/src/openclaw
-/opt/src/my_openclaw/openclaw-infra/scripts/apply-openclaw-infra.sh
+git clone https://github.com/andrekamarudin/openclaw.git /opt/src/openclaw
+/opt/src/openclaw/openclaw-infra/scripts/apply-openclaw-infra.sh
 ```

@@ -1,0 +1,43 @@
+1. /hostfs not accessible from exec
+   - AGENTS.md says /hostfs is a bind mount of the VPS root
+   - But every exec command that tried `ls /hostfs/opt/` got:
+     "ls: cannot access '/hostfs/opt/': No such file or directory"
+   - The bind mount either isn't present in this exec context
+     or exec runs in a restricted sandbox that doesn't see it
+
+2. No docker CLI binary in PATH
+   - `which docker` → "no docker in PATH"
+   - The Docker *socket* is mounted (/var/run/docker.sock) but
+     the CLI binary isn't inside the container
+   - Workaround used: raw curl against the Docker API via the socket
+
+3. No SSH to the host
+   - No ssh binary or key that could reach 127.0.0.1 (the host)
+     from inside the container
+
+4. No write access to host paths via exec
+   - Can only write to paths inside the container's own filesystem
+     or volumes explicitly mounted into it
+   - /root/.openclaw/workspace (host) is mounted read-write as
+     /home/node/.openclaw/workspace (container) — so I can write
+     workspace files, but that's still inside the openclaw volume,
+     not a sibling folder on the host
+
+Net result: no path to write to /opt/claims-gurus (or anywhere
+outside the mounted volumes) without either:
+  - /hostfs being functional in exec context, or
+  - SSH access to the host, or
+  - A docker CLI that could `docker run --rm -v /opt/claims-gurus:/out ...`
+
+If you want it deployed natively on the host (e.g. /opt/claims-gurus with a systemd service), easiest fix is to either: (a) confirm /hostfs is actually mounted and why exec can't see it, or (b) SSH into the VPS directly and cp the files from /root/.openclaw/workspace/dev/claims-gurus-rebuild/ wherever you want them.
+I changed these live config settings in /home/node/.openclaw/openclaw.json:
+
+• approvals.exec.enabled = true
+• approvals.exec.mode = "session"
+• approvals.exec.agentFilter = ["main"]
+• channels.telegram.execApprovals.enabled = true
+• channels.telegram.execApprovals.approvers = [876499264]
+• channels.telegram.execApprovals.target = "channel"
+• channels.telegram.execApprovals.agentFilter = ["main"]
+
+That’s what enables exec approval prompts to be forwarded into Telegram for your account.

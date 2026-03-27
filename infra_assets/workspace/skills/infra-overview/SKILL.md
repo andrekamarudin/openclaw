@@ -19,9 +19,9 @@ Andre runs self-hosted services across four VPS providers. This skill gives you 
 | RAM | 12 GB |
 | Reverse proxy | nginx + certbot (host-level, not containerized) |
 | Compose dir | `/opt/openclaw/` |
-| Repo checkout | `/opt/src/my_openclaw` (synced via scp, not git) |
+| Repo checkout | `/opt/src/openclaw` (synced via scp, not git) |
 | .env (secrets) | `/opt/openclaw/.env` |
-| GitHub repo | `andrekamarudin/my_openclaw` (private, `master` branch) |
+| GitHub repo | `andrekamarudin/openclaw` (private, `master` branch) |
 
 **Services on Contabo:**
 
@@ -116,8 +116,8 @@ cat /opt/postiz/docker-compose.yml
 | Disks | 60 GB NVMe (OS) + 2 TB HDD (`/mnt/storage`) |
 | Reverse proxy | Caddy (containerized, auto HTTPS) |
 | Compose dir | `/opt/nextcloud/` |
-| Repo checkout | `/opt/src/greencloud` |
-| GitHub repo | `andrekamarudin/greencloud_vps` (private, `master`) |
+| Repo checkout | `/opt/src/nextcloud` |
+| GitHub repo | `andrekamarudin/nextcloud` (private, `master`) |
 
 **Services on GreenCloud:**
 
@@ -134,7 +134,7 @@ cat /opt/postiz/docker-compose.yml
 
 ---
 
-### 4. Hostinger VPS / my_n8n (n8n automation)
+### 4. Hostinger VPS / n8n (n8n automation)
 
 | Item | Value |
 |------|-------|
@@ -183,10 +183,10 @@ ssh -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
 
 | Repo | Owner | Branch | Manages |
 |------|-------|--------|---------|
-| `my_openclaw` | `andrekamarudin` (private) | `master` | Contabo VPS infra, OpenClaw config, workspace |
+| `openclaw` | `andrekamarudin` (private) | `master` | Contabo VPS infra, OpenClaw config, workspace |
 | `vikunja_wrapper` | `andrekamarudin` (private) | `master` | Vikunja wrapper API, RackNerd Postiz infra |
 | `vikunja` | `go-vikunja` (public) | `main` | Vikunja core (upstream fork) |
-| `greencloud_vps` | `andrekamarudin` (private) | `master` | GreenCloud VPS infra, Nextcloud + Immich deploy (local folder: `greencloud/`) |
+| `nextcloud` | `andrekamarudin` (private) | `master` | GreenCloud VPS infra, Nextcloud + Immich deploy (local folder: `greencloud/`) |
 | `hk_hostinger` | `andrekamarudin` (private) | `master` | Hostinger VPS management, n8n (local folder: `hostinger/`) |
 
 ## Source of Truth

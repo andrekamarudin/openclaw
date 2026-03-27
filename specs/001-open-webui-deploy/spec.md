@@ -25,7 +25,7 @@ Andre or a family member opens Open WebUI in a browser, selects a model (e.g. GP
 
 ### User Story 2 - Deploy or update Open WebUI from Git (Priority: P1)
 
-Andre pushes a change to the `my_openclaw` repo (infra assets, config template, or compose file), then triggers a deploy script over SSH or asks the OpenClaw agent to deploy. The VPS pulls the latest commit, applies the new configuration, and restarts only the Open WebUI container without affecting OpenClaw.
+Andre pushes a change to the `openclaw` repo (infra assets, config template, or compose file), then triggers a deploy script over SSH or asks the OpenClaw agent to deploy. The VPS pulls the latest commit, applies the new configuration, and restarts only the Open WebUI container without affecting OpenClaw.
 
 **Why this priority**: Equal to P1 because the deployment model is a hard requirement, not optional infrastructure. Without it, the service cannot be maintained conflict-free.
 
@@ -33,7 +33,7 @@ Andre pushes a change to the `my_openclaw` repo (infra assets, config template, 
 
 **Acceptance Scenarios**:
 
-1. **Given** a change is pushed to `my_openclaw` on GitHub, **When** the deploy script runs on the VPS, **Then** Open WebUI is updated without affecting the OpenClaw container
+1. **Given** a change is pushed to `openclaw` on GitHub, **When** the deploy script runs on the VPS, **Then** Open WebUI is updated without affecting the OpenClaw container
 2. **Given** OpenClaw is running, **When** the Open WebUI container is stopped or restarted, **Then** OpenClaw continues operating normally
 3. **Given** the Open WebUI container is recreated, **When** Andre opens the UI, **Then** previous conversations and settings are still present
 
@@ -86,8 +86,8 @@ Andre creates accounts for family members. Each family member logs in with their
 
 - **FR-001**: Open WebUI MUST run as a separate container on the OpenClaw VPS (12 GB RAM) alongside OpenClaw, with independent lifecycle (start, stop, restart, update). Vikunja runs on a separate 2 GB VPS and is not affected.
 - **FR-002**: Open WebUI MUST persist conversations, user accounts, and settings across container restarts using a durable storage volume
-- **FR-003**: The deployment MUST follow the same GitHub-first model as OpenClaw: changes committed to `my_openclaw`, pushed to GitHub, pulled on the VPS, and applied via a deploy script
-- **FR-004**: The `my_openclaw` repo MUST contain all repo-managed assets for Open WebUI: the shared Compose service definition under `openclaw-infra/compose/` and the nginx/deploy assets under `openwebui/`
+- **FR-003**: The deployment MUST follow the same GitHub-first model as OpenClaw: changes committed to `openclaw`, pushed to GitHub, pulled on the VPS, and applied via a deploy script
+- **FR-004**: The `openclaw` repo MUST contain all repo-managed assets for Open WebUI: the shared Compose service definition under `openclaw-infra/compose/` and the nginx/deploy assets under `openwebui/`
 - **FR-005**: Secrets (API keys, admin credentials) MUST be stored outside of Git, in a VPS-side env file, consistent with the existing pattern
 - **FR-006**: Open WebUI MUST connect to remote LLM providers (OpenAI, Anthropic, OpenRouter, Groq) using the API keys already available on the VPS — no local model inference (Ollama) is required for the initial deployment
 - **FR-007**: Open WebUI MUST be accessible via a dedicated subdomain (e.g. `chat.yourdomain.com`) reverse-proxied through Caddy with automatic HTTPS, matching the existing Vikunja reverse-proxy pattern
@@ -103,7 +103,7 @@ Andre creates accounts for family members. Each family member logs in with their
 - **Open WebUI Data Volume**: Persistent storage for conversations, user accounts, model configurations, and uploaded files
 - **Open WebUI Env File**: VPS-side secrets file (API keys, admin password) kept outside Git, similar to `/opt/openclaw/.env`
 - **Deploy Script**: A repo-managed shell script that pulls from GitHub, applies infra assets, and restarts the Open WebUI container
-- **Infra Assets**: Repo-managed Compose service definition, config templates, nginx templates, and operational scripts stored under `openclaw-infra/` and `openwebui/` in `my_openclaw`
+- **Infra Assets**: Repo-managed Compose service definition, config templates, nginx templates, and operational scripts stored under `openclaw-infra/` and `openwebui/` in `openclaw`
 
 ## Assumptions
 

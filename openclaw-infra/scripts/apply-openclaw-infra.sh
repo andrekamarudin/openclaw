@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Sync repo-managed OpenClaw and Open WebUI assets to /opt/openclaw and /root/.openclaw on the VPS.
-# Run this from the VPS after pulling the latest my_openclaw repo.
+# Run this from the VPS after pulling the latest openclaw repo.
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 OC_CONFIG_DIR="${OC_CONFIG_DIR:-/root/.openclaw}"
 OPENCLAW_INFRA_DIR="$OC_REPO_DIR/openclaw-infra"
 OPENWEBUI_DIR="$OC_REPO_DIR/openwebui"

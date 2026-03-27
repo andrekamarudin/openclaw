@@ -4,16 +4,16 @@ set -euo pipefail
 # Deploy / update Karakeep on Contabo VPS.
 # Runs in its own compose project, separate from the OpenClaw stack.
 
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 KARAKEEP_DIR="${KARAKEEP_DIR:-/opt/karakeep}"
 CONFIG_DIR="${CONFIG_DIR:-/opt/config}"
 
 SOURCE_COMPOSE="$OC_REPO_DIR/infra_assets/compose/docker-compose.karakeep.yml"
 SOURCE_ENV_EXAMPLE="$OC_REPO_DIR/infra_assets/config/karakeep.env.example"
-SOURCE_WRAPPER_ENV_EXAMPLE="$OC_REPO_DIR/infra_assets/config/karakeep_wrapper.env.example"
+SOURCE_WRAPPER_ENV_EXAMPLE="$OC_REPO_DIR/infra_assets/config/karakeep.env.example"
 TARGET_COMPOSE="$KARAKEEP_DIR/docker-compose.yml"
 TARGET_ENV="$KARAKEEP_DIR/.env"
-TARGET_WRAPPER_ENV="$CONFIG_DIR/karakeep_wrapper.env"
+TARGET_WRAPPER_ENV="$CONFIG_DIR/karakeep.env"
 
 # -- Validate sources exist -----------------------------------------------
 for f in "$SOURCE_COMPOSE" "$SOURCE_ENV_EXAMPLE"; do
@@ -27,8 +27,8 @@ done
 mkdir -p "$KARAKEEP_DIR" "$CONFIG_DIR" /opt/src
 
 # -- Validate wrapper source exists ----------------------------------------
-if [ ! -d /opt/src/karakeep_wrapper ]; then
-    echo "Missing wrapper source checkout: /opt/src/karakeep_wrapper" >&2
+if [ ! -d /opt/src/karakeep ]; then
+    echo "Missing wrapper source checkout: /opt/src/karakeep" >&2
     echo "Sync the wrapper source to the VPS before deploying." >&2
     exit 1
 fi

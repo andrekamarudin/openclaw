@@ -34,7 +34,7 @@ VPS_MAP = {
         "description": "GreenCloud (167.253.159.196)",
     },
     "hostinger-agent": {
-        "ssh": "my_n8n",
+        "ssh": "n8n",
         "description": "Hostinger (31.97.71.85)",
     },
 }

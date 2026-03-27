@@ -4,7 +4,7 @@ set -euo pipefail
 # Deploy / update Vikunja + wrapper on Contabo VPS.
 # Runs in its own compose project, separate from the OpenClaw stack.
 
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 VIKUNJA_DIR="${VIKUNJA_DIR:-/opt/vikunja}"
 CONFIG_DIR="${CONFIG_DIR:-/opt/config}"
 

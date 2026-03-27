@@ -1,22 +1,22 @@
 ---
 name: karakeep-dev
-description: Use the local Karakeep development workflow for wrapper development, deploy, and issue management. Use when working on karakeep_wrapper or Karakeep infra from this OpenClaw workspace.
+description: Use the local Karakeep development workflow for wrapper development, deploy, and issue management. Use when working on karakeep or Karakeep infra from this OpenClaw workspace.
 ---
 
 # Karakeep Dev Workflow
 
-Use this skill when the task is about `karakeep_wrapper` development or Karakeep infrastructure from the Contabo OpenClaw box.
+Use this skill when the task is about `karakeep` development or Karakeep infrastructure from the Contabo OpenClaw box.
 
 ## Paths
 
-- Wrapper source: `/opt/src/karakeep_wrapper`
+- Wrapper source: `/opt/src/karakeep`
 - Worktrees: `/home/node/.openclaw/workspace/dev/worktrees`
 - Helper scripts: `/home/node/.openclaw/workspace/bin`
 - Infra configs: `/opt/src/my_openclaw/infra_assets`
 - Compose file: `/opt/src/my_openclaw/infra_assets/compose/docker-compose.karakeep.yml`
 - Deploy script: `/opt/src/my_openclaw/infra_assets/scripts/deploy-karakeep.sh`
 - Karakeep stack: `/opt/karakeep`
-- Wrapper env: `/opt/config/karakeep_wrapper.env`
+- Wrapper env: `/opt/config/karakeep.env`
 - Karakeep env: `/opt/karakeep/.env`
 
 ## First steps
@@ -27,14 +27,14 @@ Use this skill when the task is about `karakeep_wrapper` development or Karakeep
 ## GitHub issues
 
 - Wrapper issues require `GITHUB_TOKEN` for the private repo:
-  `/home/node/.openclaw/workspace/bin/github-issue.sh andrekamarudin/karakeep_wrapper <issue-number>`
+  `/home/node/.openclaw/workspace/bin/github-issue.sh andrekamarudin/karakeep <issue-number>`
 - Feedback issues go to the repo specified in `GITHUB_FEEDBACK_REPO`
 
 ## Worktrees
 
 - Create worktree:
-  `/home/node/.openclaw/workspace/bin/create-worktree.sh karakeep_wrapper <branch>`
-- All `karakeep_wrapper` work must happen in an isolated worktree and integrate back to `master`.
+  `/home/node/.openclaw/workspace/bin/create-worktree.sh karakeep <branch>`
+- All `karakeep` work must happen in an isolated worktree and integrate back to `master`.
 - After completing work in a worktree, sync changes to the main checkout, resolve any conflicts, push to `origin master`, and delete the worktree.
 
 ## Architecture
@@ -58,7 +58,7 @@ The wrapper provides:
 ## Wrapper source structure
 
 ```
-karakeep_wrapper/
+karakeep/
   auth.py        — Karakeep API key validation
   config.py      — Pydantic settings (env-based)
   feedback.py    — GitHub issue creation + LLM enrichment
@@ -111,7 +111,7 @@ Karakeep core is AGPL-3.0. The wrapper is a **separate application** that commun
 
 ## Notes
 
-- `GITHUB_TOKEN` is required for the private `karakeep_wrapper` repo.
+- `GITHUB_TOKEN` is required for the private `karakeep` repo.
 - Karakeep uses NextAuth — users create API keys in Settings → API Keys.
 - The wrapper validates tokens against Karakeep's `/api/v1/users/whoami`.
 - The VPS root filesystem is mounted at `/hostfs` if host-level inspection is required.

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 
 if [ -f "$OC_ROOT_DIR/.env" ]; then
     set -a

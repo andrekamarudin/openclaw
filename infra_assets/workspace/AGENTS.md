@@ -90,7 +90,7 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 | `sonnet` | anthropic/claude-sonnet-4-6 | Premium creative/analysis |
 
 ## Rules
-- Before making changes that affect OpenClaw, Vikunja, or VPS deployment flow, read `/hostfs/opt/src/my_openclaw/technical_how.md` and follow it as the canonical system-topology and source-of-truth guide
+- Before making changes that affect OpenClaw, Vikunja, or VPS deployment flow, read `/hostfs/opt/src/openclaw/technical_how.md` and follow it as the canonical system-topology and source-of-truth guide
 - Always confirm with the user before running self-update (it kills your session)
 - When editing config, validate JSON before writing
 - After editing AGENTS.md or SOUL.md, mention that changes take effect on the next session
@@ -117,12 +117,12 @@ Open WebUI runs as a sibling container on this VPS, published on localhost and f
 
 ### Deploy (full — pulls repo + infra + image)
 ```bash
-bash /hostfs/opt/src/my_openclaw/openwebui/scripts/deploy-openwebui.sh
+bash /hostfs/opt/src/openclaw/openwebui/scripts/deploy-openwebui.sh
 ```
 
 ### Update (quick — image pull + restart only)
 ```bash
-bash /hostfs/opt/src/my_openclaw/openwebui/scripts/update-openwebui.sh
+bash /hostfs/opt/src/openclaw/openwebui/scripts/update-openwebui.sh
 ```
 
 ### Status & Logs

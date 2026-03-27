@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Sync repo-managed infra files to /opt/openclaw and /root/.openclaw on the VPS.
-# Run this from the VPS after pulling the latest my_openclaw repo.
+# Run this from the VPS after pulling the latest openclaw repo.
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 SCRIPT_DIR="$OC_REPO_DIR/infra_assets/scripts"
 
 SCRIPT_NAMES=(
@@ -186,4 +186,4 @@ for script_name in "${SCRIPT_NAMES[@]}"; do
 done
 
 echo "Applied shared infra assets from $OC_REPO_DIR"
-echo "OpenClaw and Open WebUI assets are sourced from /opt/src/my_openclaw/openclaw-infra and /opt/src/my_openclaw/openwebui"
+echo "OpenClaw and Open WebUI assets are sourced from /opt/src/openclaw/openclaw-infra and /opt/src/openclaw/openwebui"

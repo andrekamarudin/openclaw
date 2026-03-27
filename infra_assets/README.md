@@ -32,12 +32,12 @@ This directory is no longer the canonical home for OpenClaw or Open WebUI assets
 - `nginx/homarr-*.conf` -> `/etc/nginx/sites-available/<homarr-domain>.conf`
 - `nginx/infisical-*.conf` -> `/etc/nginx/sites-available/<infisical-domain>.conf`
 - `nginx/uptime-kuma-*.conf` -> `/etc/nginx/sites-available/<uptime-kuma-domain>.conf`
-- `scripts/*.sh` -> `/opt/src/my_openclaw/infra_assets/scripts/*.sh`
+- `scripts/*.sh` -> `/opt/src/openclaw/infra_assets/scripts/*.sh`
 
 ## Compatibility Entry Point
 
 ```bash
-/opt/src/my_openclaw/infra_assets/scripts/apply-infra-assets.sh
+/opt/src/openclaw/infra_assets/scripts/apply-infra-assets.sh
 ```
 
 Use that only when you need the shared legacy behavior. For OpenClaw and Open WebUI work, use the new canonical folders directly.

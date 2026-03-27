@@ -1,6 +1,6 @@
 ---
 name: vps-ssh
-description: Use when you need SSH access to any of Andre's four VPS servers (Contabo, RackNerd, GreenCloud, Hostinger/my_n8n) to inspect containers, logs, or run commands. Covers setup scripts and SSH patterns for each host.
+description: Use when you need SSH access to any of Andre's four VPS servers (Contabo, RackNerd, GreenCloud, Hostinger/n8n) to inspect containers, logs, or run commands. Covers setup scripts and SSH patterns for each host.
 ---
 
 # VPS SSH Access
@@ -71,7 +71,7 @@ ssh -i "$KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
     "docker ps --format 'table {{.Names}}\t{{.Status}}'"
 ```
 
-## Hostinger / my_n8n (n8n — 31.97.71.85)
+## Hostinger / n8n (n8n — 31.97.71.85)
 
 | Env var | Default |
 |---------|---------|

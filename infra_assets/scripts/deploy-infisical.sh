@@ -2,7 +2,7 @@
 set -euo pipefail
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 INFISICAL_DATA_DIR="${INFISICAL_DATA_DIR:-/opt/infisical}"
 
 cd "$OC_REPO_DIR"

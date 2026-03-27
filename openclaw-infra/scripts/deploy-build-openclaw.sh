@@ -6,7 +6,7 @@ set -euo pipefail
 # WARNING: Building OpenClaw from source requires significant RAM (~4GB+).
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 OC_SRC_DIR="${OC_SRC_DIR:-/opt/src/openclaw}"
 
 cd "$OC_REPO_DIR"

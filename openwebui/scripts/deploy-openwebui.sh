@@ -4,7 +4,7 @@ set -euo pipefail
 # Deploy Open WebUI: pull repo, apply infra assets, pull latest image, start services.
 
 OC_ROOT_DIR="${OC_ROOT_DIR:-/opt/openclaw}"
-OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/my_openclaw}"
+OC_REPO_DIR="${OC_REPO_DIR:-/opt/src/openclaw}"
 
 cd "$OC_REPO_DIR"
 git pull --ff-only origin master

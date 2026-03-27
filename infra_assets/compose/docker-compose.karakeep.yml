@@ -1,7 +1,7 @@
 services:
   karakeep-web:
     build:
-      context: /opt/src/my_openclaw/infra_assets/karakeep
+      context: /opt/src/openclaw/infra_assets/karakeep
       args:
         KARAKEEP_VERSION: ${KARAKEEP_VERSION:-release}
     container_name: karakeep-web
@@ -41,11 +41,11 @@ services:
       - karakeep-meilisearch:/meili_data
 
   karakeep-wrapper:
-    build: /opt/src/karakeep_wrapper
+    build: /opt/src/karakeep
     container_name: karakeep-wrapper
     restart: unless-stopped
     env_file:
-      - /opt/config/karakeep_wrapper.env
+      - /opt/config/karakeep.env
     volumes:
       - karakeep-wrapper-data:/app/data
     ports:

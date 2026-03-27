@@ -1,20 +1,20 @@
 ---
 name: karakeep-dev
-description: Use the local Karakeep development workflow for wrapper development, deploy, and issue management. Use when working on karakeep_wrapper or Karakeep infra from this OpenClaw workspace.
+description: Use the local Karakeep development workflow for wrapper development, deploy, and issue management. Use when working on karakeep or Karakeep infra from this OpenClaw workspace.
 ---
 
 # Karakeep Dev Workflow
 
-Use this skill when the task is about `karakeep_wrapper` development or Karakeep infrastructure from the Contabo OpenClaw box.
+Use this skill when the task is about `karakeep` development or Karakeep infrastructure from the Contabo OpenClaw box.
 
 ## Paths
 
-- Wrapper source: `/opt/src/karakeep_wrapper`
+- Wrapper source: `/opt/src/karakeep`
 - Infra configs: `/opt/src/my_openclaw/infra_assets`
 - Compose file: `/opt/src/my_openclaw/infra_assets/compose/docker-compose.karakeep.yml`
 - Deploy script: `/opt/src/my_openclaw/infra_assets/scripts/deploy-karakeep.sh`
 - Karakeep stack: `/opt/karakeep`
-- Wrapper env: `/opt/config/karakeep_wrapper.env`
+- Wrapper env: `/opt/config/karakeep.env`
 - Karakeep env: `/opt/karakeep/.env`
 
 ## Architecture
@@ -38,7 +38,7 @@ The wrapper provides:
 ## Wrapper source structure
 
 ```
-karakeep_wrapper/
+karakeep/
   auth.py        — Karakeep API key validation
   config.py      — Pydantic settings (env-based)
   feedback.py    — GitHub issue creation + LLM enrichment
