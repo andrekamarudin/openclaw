@@ -4,18 +4,18 @@ Canonical OpenClaw deployment assets for the Contabo stack.
 
 ## What Lives Here
 
-- Shared Compose files for the live `/opt/openclaw` stack
+- Shared compose files for the live `/opt/openclaw` stack
 - OpenClaw runtime config template
-- The synced OpenClaw workspace files (`AGENTS.md`, `MEMORY.md`, tools, skills)
-- OpenClaw-specific deploy/update scripts
+- Synced OpenClaw workspace files such as `AGENTS.md`, memory files, tools, and skills
+- OpenClaw-specific deploy and update scripts
 - The self-update script mounted into the gateway container
 
 ## What Does Not Live Here
 
-- Secrets or API keys
-- Live `.env` files
-- Runtime-generated sessions, credentials, or workspace data
-- Open WebUI nginx templates and WebUI-specific deploy scripts
+- secrets or API keys
+- live `.env` files
+- runtime-generated sessions, credentials, or workspace data
+- shared edge Caddy config for sibling services managed elsewhere in the workspace
 
 ## VPS Targets
 
@@ -31,7 +31,7 @@ Canonical OpenClaw deployment assets for the Contabo stack.
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/apply-openclaw-infra.sh` | Sync OpenClaw assets plus the Open WebUI nginx templates to the VPS |
+| `scripts/apply-openclaw-infra.sh` | Sync OpenClaw assets to the VPS |
 | `scripts/deploy-openclaw.sh` | Pull repo changes, sync assets, pull the latest image, restart OpenClaw |
 | `scripts/deploy-build-openclaw.sh` | Pull repo changes, sync assets, build OpenClaw from source, restart it |
 | `scripts/update-openclaw.sh` | Quick image refresh without a repo pull |
@@ -48,14 +48,16 @@ Canonical OpenClaw deployment assets for the Contabo stack.
 
 ## Notes
 
-- The shared Compose file in this folder remains the source of truth for the full `/opt/openclaw` stack, including Open WebUI and the sibling services that run alongside OpenClaw.
-- Open WebUI-specific nginx templates and deploy scripts live under `../openwebui/`.
-- The older `infra_assets/scripts/*.sh` OpenClaw paths now exist only as compatibility wrappers.
+- The compose files in this folder remain the source of truth for `/opt/openclaw`.
+- Standalone Contabo Caddy is managed outside this directory.
+- Open WebUI now deploys from the sibling `openwebui/` repo.
+- The older `infra_assets/scripts/*.sh` OpenClaw paths still exist only as compatibility wrappers.
 
 ## First-Time Setup
 
 ```bash
-git clone https://github.com/andrekamarudin/openclaw.git /opt/src/openclaw
-git clone https://github.com/andrekamarudin/openclaw.git /opt/src/openclaw
+git clone https://github.com/andrekamarudin/openclaw-infra.git /opt/src/openclaw
 /opt/src/openclaw/openclaw-infra/scripts/apply-openclaw-infra.sh
 ```
+
+If you plan to run source builds, make sure the checkout contains the OpenClaw source expected by the compose build inputs before invoking `deploy-build-openclaw.sh`.

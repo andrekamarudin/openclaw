@@ -1,38 +1,38 @@
-# My OpenClaw Deployment Workspace
+# OpenClaw Deployment Workspace
 
-GitHub-first deployment workspace for the Contabo OpenClaw stack.
+GitHub-first deployment workspace for the Contabo OpenClaw stack and the remaining compatibility assets that still live beside it.
 
 ## Root Layout
 
 | Path | Purpose |
 |------|---------|
-| `openclaw-infra/` | Canonical OpenClaw stack assets: Compose files, OpenClaw config/workspace, deploy scripts |
+| `openclaw-infra/` | Canonical OpenClaw stack assets: compose files, OpenClaw config and workspace files, deploy scripts |
 | `infra_assets/` | Remaining shared and legacy assets for Homarr, Uptime Kuma, Infisical, Caddy, and compatibility wrappers |
-| `scripts/` | Local entrypoints such as the Contabo bootstrap/deploy PowerShell script |
-| `openclaw/` | OpenClaw app source checkout used only for source-build deployments |
+| `scripts/` | Local entrypoints such as the Contabo bootstrap and deploy PowerShell scripts |
+| `openclaw/` | OpenClaw app source checkout used only when a source-build deployment is required |
 
 ## Canonical Documentation
 
-- `technical_how.md` is the system-topology and source-of-truth document.
+- `technical_how.md` is the current operating-model and topology document.
 - `openclaw-infra/README.md` is the canonical OpenClaw infra guide.
-- `infra_assets/README.md` documents the remaining shared and compatibility assets.
+- `infra_assets/README.md` documents the remaining compatibility assets.
 
 ## Main Deploy Commands On The VPS
 
 ```bash
 # OpenClaw image-based deploy
-/opt/src/my_openclaw/openclaw-infra/scripts/deploy-openclaw.sh
+/opt/src/openclaw/openclaw-infra/scripts/deploy-openclaw.sh
 
 # OpenClaw source-build deploy
-/opt/src/my_openclaw/openclaw-infra/scripts/deploy-build-openclaw.sh
+/opt/src/openclaw/openclaw-infra/scripts/deploy-build-openclaw.sh
 
 # OpenClaw quick image refresh
-/opt/src/my_openclaw/openclaw-infra/scripts/update-openclaw.sh
+/opt/src/openclaw/openclaw-infra/scripts/update-openclaw.sh
 
 # Shared-service deploys that still live under infra_assets
-/opt/src/my_openclaw/infra_assets/scripts/deploy-homarr.sh
-/opt/src/my_openclaw/infra_assets/scripts/deploy-infisical.sh
-/opt/src/my_openclaw/infra_assets/scripts/deploy-uptime-kuma.sh
+/opt/src/openclaw/infra_assets/scripts/deploy-homarr.sh
+/opt/src/openclaw/infra_assets/scripts/deploy-infisical.sh
+/opt/src/openclaw/infra_assets/scripts/deploy-uptime-kuma.sh
 ```
 
 ## Local Bootstrap / Redeploy
@@ -48,21 +48,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-infisical.ps1
 - Local `.env` in this repo is the source of truth for OpenClaw secrets and Contabo access.
 - The VPS is a deployment target, not the primary editing environment.
 
-## Live VPS Paths
+## Current Runtime Notes
 
 | Path | Purpose |
 |------|---------|
-| `/opt/src/my_openclaw` | Infra/docs/deploy repo checkout |
-| `/opt/src/openclaw` | OpenClaw app source checkout for source builds |
-| `/opt/openclaw` | Live Compose stack directory |
+| `/opt/src/openclaw` | VPS checkout of this deployment workspace |
+| `/opt/openclaw` | Live OpenClaw stack directory |
 | `/opt/openclaw/.env` | Runtime env vars and secrets |
-| `/opt/infisical` | Infisical data directories for Postgres and Redis |
+| `/opt/caddy` | Standalone Contabo Caddy edge stack |
 | `/root/.openclaw` | OpenClaw runtime config, workspace, sessions, credentials |
-| `/etc/nginx/sites-available/*.conf` | Public vhost definitions for Open WebUI and sibling services |
 
 ## Notes
 
-- The shared Compose stack in `openclaw-infra/compose/docker-compose.yml` defines OpenClaw services that run on the Contabo host.
-- Open WebUI has been split into its own repo at `openwebui/` in the parent workspace.
-- `infra_assets/scripts/apply-infra-assets.sh` remains as a compatibility wrapper for older callers and for the shared Homarr/Uptime Kuma nginx assets.
-- If you are changing deployment behavior, update `technical_how.md` in the same change.
+- Contabo edge routing now comes from standalone Caddy, not host nginx.
+- Open WebUI deploys from the sibling `openwebui/` repo at `/opt/src/openwebui`.
+- `infra_assets/scripts/apply-infra-assets.sh` remains as a compatibility wrapper for older callers.
+- If you change deployment behavior or VPS topology, update `technical_how.md` in the same change.

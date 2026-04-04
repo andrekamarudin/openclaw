@@ -1,6 +1,6 @@
 # Technical How
 
-This file is the canonical explanation of how Andre's Vikunja and OpenClaw systems are meant to be changed, deployed, and kept free of server drift.
+This file is the canonical explanation of how Andre's OpenClaw and adjacent self-hosted stacks are meant to be changed, deployed, and kept free of server drift.
 
 Future agents should read this file before touching deployment scripts, VPS-managed config, or any repo that participates in these stacks.
 
@@ -10,279 +10,231 @@ The operating model is:
 
 1. GitHub repos hold the intended code and infra state.
 2. Local working copies are where edits happen.
-3. SSH is used to trigger pulls, deploy scripts, health checks, and log inspection on the VPS.
-4. The VPS is a runtime target, not the place where normal authoring happens.
+3. Infisical holds secrets.
+4. SSH is used to trigger pulls, deploy scripts, health checks, and log inspection on the VPS.
+5. The VPS is a runtime target, not the place where normal authoring happens.
 
-In short: GitHub defines desired state, SSH applies desired state.
+In short: GitHub defines desired state, deploy scripts apply desired state.
 
-## Repo Responsibilities
+## Current Repo Responsibilities
 
-### OpenClaw side
+| Repo | Responsibility |
+|------|----------------|
+| `openclaw/` | OpenClaw infra workspace, compatibility assets, Contabo bootstrap scripts, canonical OpenClaw docs |
+| `openwebui/` | Open WebUI compose, runtime helper, deploy/update scripts |
+| `vikunja_wrapper/` | Wrapper app, wrapper infra, Postiz stack, RackNerd Caddy |
+| `vikunja/` | Core Vikunja source for custom builds |
+| `karakeep/` | Karakeep wrapper plus compose |
+| `fishnet/` | Fishnet email-to-RSS stack |
+| `code_anywhere/` | CodeAnywhere web UI, ChatKit endpoint, Telegram bot |
+| `homarr/`, `infisical_app/`, `uptime_kuma/` | Compose-only Contabo services |
+| `monitoring/` | Netdata and Dozzle across Contabo, RackNerd, and GreenCloud |
+| `mcp/` | Repo MCP and Ops MCP |
+| `nextcloud/`, `immich/` | GreenCloud stacks |
+| `n8n/` | Hostinger n8n stack |
+| `infra/` | Shared Caddy config, Infisical helpers, workspace-wide infra docs |
 
-- `openclaw` is the source of truth for OpenClaw infra assets, deploy scripts, docs, and local secret-management workflow.
-- Local `.env` in `openclaw` is the source of truth for OpenClaw secrets and Contabo SSH access details.
-- `openclaw` is the app source repo used only when you need a source-build deployment instead of consuming the published image.
+## Current VPS Topology
 
-Inside `openclaw`, the canonical layout is now:
+### Contabo
 
-- `openclaw-infra/` - OpenClaw stack Compose files, config, workspace files, and OpenClaw deploy scripts
-- `openwebui/` - Open WebUI nginx templates, deploy scripts, and Open WebUI docs
-- `infra_assets/` - remaining shared assets and compatibility wrappers for services such as Homarr, Uptime Kuma, and Infisical
+- IP: `46.250.234.28`
+- Edge proxy: standalone Caddy at `/opt/caddy`
+- Shared Docker network for proxied services: `caddy-net`
 
-### Vikunja side
+Main live paths:
 
-- `vikunja_wrapper` is the source of truth for the wrapper app, wrapper-specific infra assets, deploy scripts, and reverse-proxy wiring.
-- `vikunja` is the core source checkout used for source-build deployments when production needs custom core changes beyond the official image.
+- `/opt/src/openclaw`
+- `/opt/src/openwebui`
+- `/opt/src/vikunja_wrapper`
+- `/opt/src/vikunja`
+- `/opt/src/karakeep`
+- `/opt/src/fishnet`
+- `/opt/src/code_anywhere`
+- `/opt/src/mcp`
+- `/opt/src/self_hosting/infra`
+- `/opt/openclaw`
+- `/opt/openwebui`
+- `/opt/vikunja`
+- `/opt/karakeep`
+- `/opt/fishnet`
+- `/opt/code_anywhere`
+- `/opt/mcp`
+- `/root/.openclaw`
 
-## VPS Layout
+Main services:
 
-There are two separate VPS hosts:
+- OpenClaw
+- Open WebUI
+- Vikunja plus wrapper
+- Karakeep
+- Infisical
+- Homarr
+- Uptime Kuma
+- Fishnet
+- Repo MCP and Ops MCP
+- CodeAnywhere
+- Contabo monitoring
 
-### OpenClaw VPS (12 GB RAM)
+### RackNerd
 
-This is the multi-app host where OpenClaw runs and maintains other deployed apps (including Open WebUI). OpenClaw has Docker socket access and can deploy/manage sibling containers.
+- IP: `23.226.133.245`
+- Edge proxy: standalone Caddy at `/opt/caddy`
+- Primary workloads: Postiz, Dozzle, Netdata
 
-Important live paths:
+Main live paths:
 
-- `/opt/src/openclaw` - checkout of the infra repo for OpenClaw
-- `/opt/src/openclaw` - checkout of the OpenClaw app fork for source builds
-- `/opt/openclaw` - live OpenClaw Compose stack directory (also hosts Open WebUI)
-- `/opt/infisical` - Infisical persistent data directory for PostgreSQL and Redis
-- `/etc/nginx/sites-available/*.conf` - host nginx virtual-host configs for public endpoints
-- `/root/.openclaw` - live OpenClaw runtime config, sessions, workspace, and credentials
+- `/opt/src/vikunja_wrapper`
+- `/opt/src/monitoring`
+- `/opt/postiz`
+- `/opt/monitoring`
 
-Containers on this VPS:
+### GreenCloud
 
-- `openclaw-gateway` — the AI assistant (ports 18789/18790)
-- `openclaw-cli` — CLI companion (shares gateway network)
-- `open-webui` — multi-user LLM chat UI (container port 8080, bound to localhost on the host)
-- `infisical-backend` — secret management UI/API (container port 8080, bound to localhost on the host)
-- `infisical-db` — PostgreSQL for Infisical data
-- `infisical-redis` — Redis for Infisical cache and background jobs
-- `nginx` — host reverse proxy providing HTTPS for Open WebUI and OpenClaw domains
+- IP: `167.253.159.196`
+- Edge proxy: Caddy inside the Nextcloud compose stack
+- Primary workloads: Nextcloud, Immich, Dozzle, Netdata
 
-### Vikunja VPS (2 GB RAM)
+Main live paths:
 
-This is a separate, smaller VPS dedicated to Vikunja. OpenClaw on the other VPS maintains it remotely via SSH.
+- `/opt/src/nextcloud`
+- `/opt/src/immich`
+- `/opt/src/monitoring`
+- `/opt/nextcloud`
+- `/opt/immich`
+- `/opt/monitoring`
+- `/mnt/storage`
 
-Important live paths:
+### Hostinger
 
-- `/opt/src/vikunja_wrapper` - checkout of the wrapper repo
-- `/opt/src/vikunja` - checkout of the core Vikunja repo
-- `/opt/vikunja` - live Vikunja Compose stack directory
-- `/opt/config/vikunja_wrapper.env` - wrapper runtime secrets kept out of git
+- IP: `31.97.71.85`
+- Edge proxy: Caddy inside the n8n compose stack
+- Primary workload: n8n
 
-### Path conventions
+Main live paths:
 
-Both VPSes follow the same layout convention:
+- `/opt/src/n8n`
+- `/opt/n8n`
 
-- `/opt/src/...` holds git-managed source checkouts.
-- `/opt/<app>/` holds live runtime stack files (Compose, env, scripts).
-- Runtime state directories (e.g. `/root/.openclaw`) hold app-specific config, sessions, and workspace data.
+## Path Conventions
+
+- `/opt/src/<name>` holds the git-managed source checkout.
+- `/opt/<name>/` holds live runtime files such as compose files, Caddyfiles, and env files.
+- `/opt/config/` holds shared runtime helpers such as the Infisical agent env and fetch helper.
+- Standalone Caddy hosts also keep `/opt/caddy/` for the edge proxy stack.
 
 ## Source Of Truth Rules
-
-These rules are the main protection against conflicting deploys and server drift.
 
 1. Do not treat SSH sessions as a normal editing environment.
 2. Do not hand-edit repo-managed files on the VPS unless it is an emergency.
 3. Make code and infra changes in the relevant local repo first.
 4. Commit and push those changes to GitHub.
-5. Use SSH to pull and deploy the already-pushed state on the VPS.
-6. If an emergency VPS edit is unavoidable, backport it into Git immediately and redeploy from source of truth.
+5. Use SSH only after the canonical branch contains the desired state.
+6. If an emergency VPS edit is unavoidable, backport it into Git immediately and redeploy from source.
 
-Repo-managed means things like:
+Repo-managed means things such as:
 
-- Compose files
-- reverse-proxy config
+- compose files
+- Caddy config
 - deploy scripts
 - config templates
-- wrapper source code
-- OpenClaw infra assets
-- Infisical deployment assets
+- wrapper or OpenClaw source code
+- workspace files and docs
 
 Secrets and runtime-only state are the exception. They intentionally live outside Git, for example:
 
-- `openclaw/.env` locally
-- `/opt/openclaw/.env` on the VPS
-- `/opt/config/vikunja_wrapper.env` on the VPS
+- local `.env` files that are not meant to be committed
+- `/opt/<service>/.env` when populated by Infisical or manual bootstrap
 - `/root/.openclaw/credentials/`
-- persisted sessions and runtime-generated files
+- container volumes and runtime-generated files
 
 ## How SSH Is Supposed To Be Used
-
-SSH is for controlled operations, not freehand configuration drift.
 
 Normal SSH uses:
 
 - run deploy scripts
-- pull latest commits on the VPS
+- pull the latest commits on the VPS
 - inspect container status
 - inspect logs
-- copy the local secret `.env` to the VPS when needed
 - run health checks
-- restart services after a config or image change
+- restart services after config or image changes
 
 SSH should usually not be used for:
 
 - editing checked-in source files directly on the server
-- editing repo-managed reverse-proxy or Compose files by hand
+- editing repo-managed reverse-proxy or compose files by hand
 - making a quick server-only fix and leaving Git behind
 
-## OpenClaw Deployment Model
+## Repo-Specific Deployment Notes
 
-The standard OpenClaw workflow is:
-
-1. Edit `openclaw` locally.
-2. Push to GitHub.
-3. Use local PowerShell or SSH to trigger the deploy on the VPS.
-4. The VPS updates from Git and recreates the relevant container state.
-
-Primary repos and roles:
-
-- `openclaw` owns infra assets, templates, docs, and deploy automation.
-- `openclaw` only matters when you are building from your fork instead of pulling `ghcr.io/openclaw/openclaw:main`.
-
-Normal image-based OpenClaw deploy path:
-
-1. Update `openclaw` locally.
-2. Push to GitHub.
-3. Run `scripts/deploy-contabo-openclaw.ps1` locally or invoke the matching VPS deploy script over SSH.
-4. On the VPS, `/opt/src/openclaw/openclaw-infra/scripts/deploy-openclaw.sh` pulls repo changes, applies repo-managed assets, updates the image if needed, and restarts the stack.
-
-Source-build OpenClaw deploy path:
-
-1. Update the `openclaw` fork locally.
-2. Push to GitHub.
-3. Run `/opt/src/openclaw/openclaw-infra/scripts/deploy-build-openclaw.sh` on the VPS.
-4. The VPS uses `/opt/src/openclaw` as build input and redeploys from source.
-
-Operational rule:
-
-- For infra changes, change `openclaw`.
-- For application code changes that require a custom build, change `openclaw`.
-- Do not patch either directly inside `/opt/src/...` on the VPS as the primary workflow.
-
-## Open WebUI Deployment Model
-
-Open WebUI runs on the same Contabo VPS as OpenClaw, in a separate container published on localhost and fronted by the host nginx service for HTTPS.
-
-- Image: `ghcr.io/open-webui/open-webui:main` (official, no Ollama)
-- Reverse proxy: host nginx with certbot-managed TLS
-- All infra is managed in `openclaw` (Compose, nginx templates, deploy scripts, env vars)
-- Signup is disabled — admin creates accounts manually
-
-Deploy scripts:
-
-- Full deploy: `openwebui/scripts/deploy-openwebui.sh` (git pull → apply OpenClaw/Open WebUI assets → pull image → restart)
-- Quick update: `openwebui/scripts/update-openwebui.sh` (pull image → restart only)
-- Bootstrap: `scripts/deploy-contabo-openclaw.ps1` starts Open WebUI and configures nginx + TLS
-
-The nginx templates under `openwebui/nginx/` are synced by `openclaw-infra/scripts/apply-openclaw-infra.sh`. Before a certificate exists, the HTTP-only template is deployed; after certbot issues a certificate, the HTTPS template becomes the repo-managed source of truth. The older `infra_assets/scripts/apply-infra-assets.sh` wrapper still exists for compatibility with shared-service callers.
-
-## Vikunja Deployment Model
-
-The Vikunja side is split between core and wrapper.
-
-### Wrapper
-
-The wrapper is source-built from the VPS checkout at `/opt/src/vikunja_wrapper`.
+### OpenClaw
 
 Expected workflow:
 
-1. Edit locally in `vikunja_wrapper`.
-2. Use an isolated git worktree for implementation because that repo explicitly requires it.
-3. Push the finished change to GitHub `master`.
-4. On the VPS, run `/opt/src/vikunja_wrapper/infra_assets/scripts/deploy-wrapper.sh`.
-5. That script fast-forwards from GitHub, reapplies repo-managed infra assets, rebuilds `llm-chat`, and keeps Caddy aligned.
+1. Edit locally in `openclaw/`.
+2. Push to GitHub.
+3. Trigger deploy with the local PowerShell helper or by running the VPS script.
+4. Let `/opt/src/openclaw/openclaw-infra/scripts/deploy-openclaw.sh` or `deploy-build-openclaw.sh` pull, sync, and restart the stack.
 
-Important wrapper rule:
+Use `deploy-build-openclaw.sh` only when production must build from source instead of using the published image.
 
-- If a new wrapper route or page is added, update `infra_assets/caddy/Caddyfile` in the same change so the reverse proxy matches the deployed app.
-
-### Core Vikunja
-
-The VPS source checkout at `/opt/src/vikunja` is the build input whenever production needs custom core behavior.
+### Open WebUI
 
 Expected workflow:
 
-1. Decide whether the change is a source-code change or just an image refresh.
-2. For code work, make changes locally in a dedicated worktree for the `vikunja` repo and push to GitHub.
-3. If production is meant to run custom core changes, ensure `/opt/src/vikunja` on the VPS matches the intended source tree before deploy.
-4. For production updates, use the repo-managed deploy helper from `openclaw` so the live compose config builds Vikunja from `/opt/src/vikunja`.
-5. Let the server pull or refresh from the declared source rather than hand-editing the live stack.
+1. Edit locally in `openwebui/`.
+2. Push to GitHub.
+3. Run `/opt/src/openwebui/scripts/deploy-openwebui.sh` on Contabo, or let GitHub Actions do it.
+4. Let the deploy script copy the compose file into `/opt/openwebui`, fetch secrets, restart the container, and re-apply database-backed runtime settings.
+
+Open WebUI is routed by the standalone Contabo Caddy stack, not by host nginx.
+
+### Vikunja Wrapper And Core
+
+Expected workflow:
+
+1. Edit wrapper changes in `vikunja_wrapper/` and core changes in `vikunja/`.
+2. Use isolated worktrees where the repo requires them.
+3. Push the finished change to GitHub.
+4. Run `/opt/src/vikunja_wrapper/infra_assets/scripts/deploy-wrapper.sh` for wrapper-only changes.
+5. Use `/opt/src/vikunja_wrapper/infra_assets/scripts/deploy-build-vikunja.sh` when a custom Vikunja core build is required.
+
+The live Contabo stack sits at `/opt/vikunja` and is routed by standalone Contabo Caddy.
+
+### Monitoring
+
+Monitoring is per-host. Use the same repo on all three hosts, but pass the matching `INFISICAL_PROJECT` value when deploying.
+
+### Fishnet
+
+Fishnet is manual today. Use `/opt/src/fishnet/scripts/deploy.sh` on Contabo.
 
 ## Conflict-Free Deployment Pattern
 
 To avoid collisions between local work, multiple agents, and server state:
 
-1. Make changes in a local repo, not in the shared live checkout.
-2. For repos that require worktrees, use one isolated worktree per task.
-3. Push the reviewed result to the repo's default branch or required integration branch.
+1. Make changes in a local repo, not in a live checkout.
+2. Use one isolated worktree per task where the repo requires it.
+3. Push the reviewed result to the repo's default branch.
 4. Use SSH only after the canonical branch contains the desired state.
 5. Let the VPS fast-forward or pull that branch and run the deployment script.
 
-This avoids three common failure modes:
+This avoids common failure modes such as:
 
 - local work diverging from what was hotfixed on the server
 - multiple agents editing the same checkout concurrently
 - live config no longer matching what the repo claims is deployed
 
-## Direct-To-Server Paths
-
-Some direct server-oriented paths still exist, for example a direct git remote push for `vikunja_wrapper` production.
-
-Treat those as compatibility paths, not the preferred mental model.
-
-For conflict-free operations, prefer:
-
-1. local change
-2. push to GitHub
-3. SSH into the VPS only to pull and deploy
-
-That keeps GitHub as the auditable integration point and reduces ambiguity about what is actually supposed to be running.
-
-## Live-Edit Exceptions
-
-Direct VPS edits are only acceptable when the alternative is downtime or broken access and there is no safe time to go through the full repo workflow first.
-
-If that happens:
-
-1. keep the edit minimal
-2. document exactly what changed
-3. port the same change back into the correct repo immediately
-4. commit and push it
-5. redeploy from the repo-managed path so the server returns to a clean, reproducible state
-
-Emergency edits are not complete until the repo catches up.
-
-## Practical Mental Model For Future Agents
-
-When deciding where a change belongs, ask these questions in order:
-
-1. Is this OpenClaw infra, docs, deploy automation, or config templating? Use `openclaw`.
-2. Is this OpenClaw app source code for a custom source build? Use `openclaw`.
-3. Is this wrapper app behavior, wrapper infra, or proxy wiring? Use `vikunja_wrapper`.
-4. Is this core Vikunja source behavior? Use `vikunja`.
-5. Is this only a live secret or runtime state value? Change the server-side secret or runtime location, not Git.
-
-Then apply the deployment rule:
-
-- change locally
-- push to GitHub
-- SSH to pull and deploy
-- avoid server-only edits
-
 ## Short Version
 
-The intended system is not "SSH into the box and tweak it until it works."
+The intended system is not “SSH into the box and tweak it until it works.”
 
 It is:
 
 1. local repo change
 2. GitHub push
-3. VPS pull via SSH
+3. VPS pull via SSH or GitHub Actions
 4. scripted deploy
 5. health check
 
-That is the mechanism that keeps Vikunja and OpenClaw reproducible, conflict-free, and understandable later.
+That is the mechanism that keeps OpenClaw and the rest of the self-hosting stack reproducible and understandable later.
