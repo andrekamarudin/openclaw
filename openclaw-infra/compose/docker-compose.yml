@@ -37,7 +37,7 @@ services:
       - default
       - caddy-net
     init: true
-    restart: unless-stopped
+    restart: "no"
     mem_limit: 1536m
     memswap_limit: 3g
     command:

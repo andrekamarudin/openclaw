@@ -22,8 +22,9 @@ if [ -f "$INFISICAL_ENV" ]; then
 fi
 
 cd "$OC_ROOT_DIR"
+docker compose stop openclaw-gateway openclaw-cli || true
+docker compose rm -f openclaw-gateway openclaw-cli || true
 docker compose pull openclaw-gateway
-docker compose up -d --no-deps openclaw-gateway
 
 # Fix permissions for the openclaw config dir
 chown -R 1000:1000 /root/.openclaw
