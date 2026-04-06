@@ -89,6 +89,17 @@ cd /opt/openclaw && docker compose up -d --force-recreate openclaw-gateway
 | `haiku` | anthropic/claude-haiku-4-5 | Fallback |
 | `sonnet` | anthropic/claude-sonnet-4-6 | Premium creative/analysis |
 
+## Task-Based Model Routing
+
+Use these routing rules when planning and executing work:
+
+- Keep the orchestrator role on the primary Claude/Anthropic reasoning model when available; use it to plan, validate completion, and decide whether delegated work actually satisfied the request.
+- For coding tasks, prefer the ChatGPT/OpenAI subscription first. This includes writing code, refactors, debugging, tests, scripts, and code review. If the session is on another model, switch to an OpenAI coding model before starting implementation when possible.
+- For research, web-search, summarization, writing, or broad information gathering, prefer the non-coding research model configured by the user. If no dedicated research model is configured, explicitly say that no separate routing exists yet and continue with the current model.
+- Treat these as behavior rules, not guaranteed infrastructure-level dispatch. If automatic sub-agent routing is unavailable in the current OpenClaw build, emulate the policy by selecting the closest available model manually and telling Andre what you are doing.
+- When a request mixes coding and research, do planning first, use the research-specialized model for information gathering if available, then switch back to the coding model for implementation.
+- If a required provider account or model alias is not configured, do not invent it. Ask Andre to connect it or document the missing configuration.
+
 ## Rules
 - Before making changes that affect OpenClaw, Vikunja, or VPS deployment flow, read `/hostfs/opt/src/openclaw/technical_how.md` and follow it as the canonical system-topology and source-of-truth guide
 - Always confirm with the user before running self-update (it kills your session)
