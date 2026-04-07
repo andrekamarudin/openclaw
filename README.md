@@ -58,6 +58,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-contabo-infisical.ps1
 | `/opt/caddy` | Standalone Contabo Caddy edge stack |
 | `/root/.openclaw` | OpenClaw runtime config, workspace, sessions, credentials |
 
+## Proper Shutdown
+
+OpenClaw has systemd timers that poll for device approvals and manage Tailscale. To shut down the stack without it "resurrecting":
+
+```bash
+# 1. Stop and disable the timers
+systemctl stop openclaw-device-approval-notifier.timer openclaw-tailscale-finalize.timer
+systemctl disable openclaw-device-approval-notifier.timer openclaw-tailscale-finalize.timer
+
+# 2. Bring down the stack
+cd /opt/openclaw && docker compose down
+```
+
 ## Notes
 
 - Contabo edge routing now comes from standalone Caddy, not host nginx.
