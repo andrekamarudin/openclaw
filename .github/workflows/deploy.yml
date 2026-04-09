@@ -42,30 +42,31 @@ jobs:
             exit 0
           fi
 
-          python3 - <<'PY' >> "$GITHUB_ENV"
-          import json
-          import os
+            eval "$(python3 - <<'PY'
+            import json
+            import os
+            import shlex
 
-          needs = json.loads(os.environ["JOB_RESULTS"])
-          results = {name: str(data.get("result") or "unknown") for name, data in needs.items()}
-          has_failure = any(result == "failure" for result in results.values())
-          has_cancelled = any(result == "cancelled" for result in results.values())
+            needs = json.loads(os.environ["JOB_RESULTS"])
+            results = {name: str(data.get("result") or "unknown") for name, data in needs.items()}
+            has_failure = any(result == "failure" for result in results.values())
+            has_cancelled = any(result == "cancelled" for result in results.values())
 
-          if has_failure:
+            if has_failure:
               status = "failure"
               priority = "5"
               tags = "rotating_light,x"
-          elif has_cancelled:
+            elif has_cancelled:
               status = "cancelled"
               priority = "4"
               tags = "warning"
-          else:
+            else:
               status = "success"
               priority = "2"
               tags = "white_check_mark"
 
-          summary = ", ".join(f"{name}:{result}" for name, result in results.items()) or "no upstream jobs"
-          message = "\n".join([
+            summary = ", ".join(f"{name}:{result}" for name, result in results.items()) or "no upstream jobs"
+            message = "\n".join([
               f"Repo: {os.environ['GITHUB_REPOSITORY']}",
               f"Workflow: {os.environ['GITHUB_WORKFLOW']}",
               f"Status: {status}",
@@ -73,15 +74,19 @@ jobs:
               f"Actor: {os.environ.get('GITHUB_ACTOR', '')}",
               f"Run: {os.environ['RUN_URL']}",
               f"Jobs: {summary}",
-          ])
+            ])
 
-          print(f"NTFY_TITLE={os.environ['GITHUB_WORKFLOW']} {status}")
-          print(f"NTFY_PRIORITY={priority}")
-          print(f"NTFY_TAGS={tags}")
-          print("NTFY_MESSAGE<<EOF")
-          print(message)
-          print("EOF")
-          PY
+            values = {
+              "NTFY_TITLE": f"{os.environ['GITHUB_WORKFLOW']} {status}",
+              "NTFY_PRIORITY": priority,
+              "NTFY_TAGS": tags,
+              "NTFY_MESSAGE": message,
+            }
+
+            for key, value in values.items():
+              print(f"{key}={shlex.quote(value)}")
+            PY
+            )"
 
           curl --fail --show-error --silent \
             -H "Authorization: Bearer $NTFY_TOKEN" \
