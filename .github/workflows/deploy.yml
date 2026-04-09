@@ -34,7 +34,7 @@ jobs:
         env:
           JOB_RESULTS: ${{ toJson(needs) }}
           NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
-          NTFY_TOPIC_URL: https://ntfy.bytesizeprotip.com/andre
+          NTFY_TOPIC_URL: https://ntfy.bytesizeprotip.com/deploy
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ -z "$NTFY_TOKEN" ]; then
