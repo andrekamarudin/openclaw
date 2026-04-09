@@ -24,3 +24,70 @@ jobs:
             git checkout -- .
             git pull --ff-only origin master
             bash openclaw-infra/scripts/deploy-openclaw.sh
+
+  notify:
+    if: ${{ always() }}
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send ntfy notification
+        env:
+          JOB_RESULTS: ${{ toJson(needs) }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_TOPIC_URL: https://ntfy.bytesizeprotip.com/andre
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$NTFY_TOKEN" ]; then
+            echo "NTFY_TOKEN secret not configured, skipping notification."
+            exit 0
+          fi
+
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          import os
+
+          needs = json.loads(os.environ["JOB_RESULTS"])
+          results = {name: str(data.get("result") or "unknown") for name, data in needs.items()}
+          has_failure = any(result == "failure" for result in results.values())
+          has_cancelled = any(result == "cancelled" for result in results.values())
+
+          if has_failure:
+              status = "failure"
+              priority = "5"
+              tags = "rotating_light,x"
+          elif has_cancelled:
+              status = "cancelled"
+              priority = "4"
+              tags = "warning"
+          else:
+              status = "success"
+              priority = "2"
+              tags = "white_check_mark"
+
+          summary = ", ".join(f"{name}:{result}" for name, result in results.items()) or "no upstream jobs"
+          message = "\n".join([
+              f"Repo: {os.environ['GITHUB_REPOSITORY']}",
+              f"Workflow: {os.environ['GITHUB_WORKFLOW']}",
+              f"Status: {status}",
+              f"Ref: {os.environ.get('GITHUB_REF_NAME', '')}",
+              f"Actor: {os.environ.get('GITHUB_ACTOR', '')}",
+              f"Run: {os.environ['RUN_URL']}",
+              f"Jobs: {summary}",
+          ])
+
+          print(f"NTFY_TITLE={os.environ['GITHUB_WORKFLOW']} {status}")
+          print(f"NTFY_PRIORITY={priority}")
+          print(f"NTFY_TAGS={tags}")
+          print("NTFY_MESSAGE<<EOF")
+          print(message)
+          print("EOF")
+          PY
+
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer $NTFY_TOKEN" \
+            -H "Title: $NTFY_TITLE" \
+            -H "Priority: $NTFY_PRIORITY" \
+            -H "Tags: $NTFY_TAGS" \
+            -H "Click: $RUN_URL" \
+            -d "$NTFY_MESSAGE" \
+            "$NTFY_TOPIC_URL"
