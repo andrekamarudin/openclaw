@@ -1,0 +1,88 @@
+name: Stop OpenClaw
+on:
+  workflow_dispatch:
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stop on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 46.250.234.28
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/openclaw && docker compose down
+
+  notify:
+    if: ${{ always() }}
+    needs: [stop]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send ntfy notification
+        env:
+          JOB_RESULTS: ${{ toJson(needs) }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_TOPIC_URL: https://ntfy.bytesizeprotip.com/deploy
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$NTFY_TOKEN" ]; then
+            echo "NTFY_TOKEN secret not configured, skipping notification."
+            exit 0
+          fi
+
+          eval "$(python3 - <<'PY'
+          import json
+          import os
+          import shlex
+
+          needs = json.loads(os.environ["JOB_RESULTS"])
+          results = {name: str(data.get("result") or "unknown") for name, data in needs.items()}
+          has_failure = any(result == "failure" for result in results.values())
+          has_cancelled = any(result == "cancelled" for result in results.values())
+
+          if has_failure:
+            status = "failure"
+            priority = "5"
+            tags = "rotating_light,x"
+          elif has_cancelled:
+            status = "cancelled"
+            priority = "4"
+            tags = "warning"
+          else:
+            status = "success"
+            priority = "2"
+            tags = "white_check_mark"
+
+          summary = ", ".join(f"{name}:{result}" for name, result in results.items()) or "no upstream jobs"
+          message = "\n".join([
+            f"Repo: {os.environ['GITHUB_REPOSITORY']}",
+            f"Workflow: {os.environ['GITHUB_WORKFLOW']}",
+            f"Status: {status}",
+            f"Ref: {os.environ.get('GITHUB_REF_NAME', '')}",
+            f"Actor: {os.environ.get('GITHUB_ACTOR', '')}",
+            f"Run: {https://github.com/andrekamarudin/openclaw-infra/actions/runs/${{ github.run_id }}",
+            f"Jobs: {summary}",
+          ])
+
+          values = {
+            "NTFY_TITLE": f"{os.environ['GITHUB_WORKFLOW']} {status}",
+            "NTFY_PRIORITY": priority,
+            "NTFY_TAGS": tags,
+            "NTFY_MESSAGE": message,
+          }
+
+          for key, value in values.items():
+            print(f"{key}={shlex.quote(value)}")
+          PY
+          )"
+
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer $NTFY_TOKEN" \
+            -H "Title: $NTFY_TITLE" \
+            -H "Priority: $NTFY_PRIORITY" \
+            -H "Tags: $NTFY_TAGS" \
+            -H "Click: $RUN_URL" \
+            -d "$NTFY_MESSAGE" \
+            "$NTFY_TOPIC_URL"
