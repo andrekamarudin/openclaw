@@ -17,7 +17,11 @@ import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
-CREDS_FILE = os.path.join(REPO_ROOT, "infisical_credentials.json")
+# Canonical shared location (see howto-secrets-management/SKILL.md).
+# Falls back to the legacy REPO_ROOT path for backwards compatibility.
+_CANONICAL_CREDS = os.path.join(os.path.expanduser("~"), ".agents", "skills", "infisical_credentials.json")
+_LEGACY_CREDS = os.path.join(REPO_ROOT, "infisical_credentials.json")
+CREDS_FILE = _CANONICAL_CREDS if os.path.exists(_CANONICAL_CREDS) else _LEGACY_CREDS
 HELPER_SCRIPT = os.path.join(REPO_ROOT, "infra_assets", "scripts", "infisical-env.sh")
 
 VPS_MAP = {
@@ -138,9 +142,7 @@ def main():
     print(f"\n{'=' * 50}")
     print("Bootstrap complete!")
     print(f"{'=' * 50}")
-    print(
-        "\nNext: Update deploy scripts to call `infisical_fetch` before starting containers."
-    )
+    print("\nNext: Update deploy scripts to call `infisical_fetch` before starting containers.")
 
 
 if __name__ == "__main__":
