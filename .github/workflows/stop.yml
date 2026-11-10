@@ -12,6 +12,7 @@ jobs:
           host: 46.250.234.28
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
+          fingerprint: "SHA256:Hm7GwcK9652B4GyHSs3Moo0m7k+h0DawwPwcs1fd6iA"
           script: |
             cd /opt/openclaw && docker compose down
 
